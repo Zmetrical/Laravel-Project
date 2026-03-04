@@ -28,4 +28,11 @@ RUN sed -i 's|/var/www/html|/var/www/html/public|g' \
 # Enable Apache mod_rewrite (needed for Laravel routes)
 RUN a2enmod rewrite
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 80
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["apache2-foreground"]
