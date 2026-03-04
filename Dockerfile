@@ -2,7 +2,7 @@ FROM php:8.2-apache
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
-    libpq-dev zip unzip curl git \
+    libpq-dev zip unzip curl git nodejs npm \
     && docker-php-ext-install pdo pdo_pgsql
 
 # Install Composer
@@ -14,8 +14,11 @@ WORKDIR /var/www/html
 # Copy all Laravel files
 COPY . .
 
-# Install Laravel dependencies
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
+
+# Install JS dependencies and build assets
+RUN npm install && npm run build
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage
@@ -25,7 +28,7 @@ RUN chown -R www-data:www-data /var/www/html/bootstrap/cache
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' \
     /etc/apache2/sites-available/000-default.conf
 
-# Enable Apache mod_rewrite (needed for Laravel routes)
+# Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
 # Copy entrypoint script
