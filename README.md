@@ -26,8 +26,6 @@ This system was built to handle the day-to-day payroll and HR operations of a mu
 
 ## Screenshots
 
-> Put your screenshots inside a `/screenshots` folder in the project root.
-
 | Page | Preview |
 |------|---------|
 | Login | ![Login](screenshots/login.png) |
