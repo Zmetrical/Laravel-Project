@@ -5,48 +5,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'My App')</title>
+    <title>@yield('title', 'Fast Services Payroll')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {{-- <link rel="icon" type="image/x-icon" href="{{ asset('img/logo.jpg') }}"> --}}
+
+    <link rel="stylesheet" href="{{ asset('css/main.css') }}">
+    <script src="{{ asset('js/main.js') }}"></script>
+
     @stack('styles')
 </head>
-<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+
+<body class="layout-fixed sidebar-expand-lg">
 <div class="app-wrapper">
 
-    <nav class="app-header navbar navbar-expand bg-body shadow">
+    {{-- ╔══════════════════════════════════════════════════════╗
+         ║  TOP NAVBAR                                          ║
+         ╚══════════════════════════════════════════════════════╝ --}}
+    <nav class="app-header navbar navbar-expand" style="background-color: #161616; border-bottom:1px solid #2e2e2e;">
         <div class="container-fluid">
-            <button class="navbar-toggler" type="button" data-lte-toggle="sidebar">
-                <span class="navbar-toggler-icon"></span>
-            </button>
 
-            <ul class="navbar-nav me-auto">
+            {{-- Sidebar toggle --}}
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-lte-toggle="sidebar" role="button">
+                        <i class="bi bi-list fs-4" style="color: #C9A227;"></i>
+                    </a>
+                </li>
+            </ul>
+
+            {{-- Breadcrumb slot --}}
+            <ul class="navbar-nav me-auto ms-2">
                 <li class="nav-item d-flex align-items-center">
                     @yield('breadcrumb')
                 </li>
             </ul>
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                        Account
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#">Profile</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">Logout</a></li>
-                    </ul>
-                </li>
-            </ul>
+
         </div>
     </nav>
 
-    <aside class="app-sidebar bg-body-secondary shadow">
+    {{-- ╔══════════════════════════════════════════════════════╗
+         ║  SIDEBAR                                             ║
+         ╚══════════════════════════════════════════════════════╝ --}}
+    <aside class="app-sidebar shadow" style="background-color:#1a1a1a;">
         @include('components.sidebar')
     </aside>
 
-    <main class="app-main">
-        <div class="app-content">
+    {{-- ╔══════════════════════════════════════════════════════╗
+         ║  MAIN CONTENT                                        ║
+         ╚══════════════════════════════════════════════════════╝ --}}
+    <main class="app-main" style="background:#f5f4f0;">
+        <div class="app-content pt-3">
             <div class="container-fluid">
                 @include('components.alerts')
-                <br>
                 @yield('content')
             </div>
         </div>
@@ -54,9 +64,9 @@
 
 </div>
 
+{{-- Global scripts --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 @stack('scripts')
-
 </body>
 </html>

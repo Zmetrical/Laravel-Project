@@ -1,0 +1,104 @@
+/* ── Brand colour tokens ──────────────────────────────────── */
+:root {
+  --bs-primary:             #C9A227;
+  --bs-primary-rgb:         201, 162, 39;
+  --bs-secondary:           #1a1a1a;
+  --bs-secondary-rgb:       26, 26, 26;
+  --bs-link-color:          #C9A227;
+  --bs-link-hover-color:    #a8841e;
+
+  --lte-sidebar-bg-color:       #1a1a1a;
+  --lte-sidebar-color:          #ffffff;
+  --lte-sidebar-hover-bg:       rgba(201, 162, 39, 0.12);
+  --lte-sidebar-hover-color:    #C9A227;
+  --lte-sidebar-active-bg:      rgba(201, 162, 39, 0.18);
+  --lte-sidebar-active-color:   #C9A227;
+  --lte-sidebar-submenu-bg:     #111111;
+  --lte-sidebar-submenu-color:  #ffffff;
+  --lte-brand-link-bg:          #111111;
+  --lte-brand-link-color:       #C9A227;
+  --lte-brand-link-hover-bg:    #111111;
+}
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.btn-primary {
+  --bs-btn-bg:                 #C9A227;
+  --bs-btn-border-color:       #C9A227;
+  --bs-btn-hover-bg:           #a8841e;
+  --bs-btn-hover-border-color: #a8841e;
+  --bs-btn-color:              #fff;
+  --bs-btn-active-bg:          #8f6f19;
+}
+.btn-outline-primary {
+  --bs-btn-color:              #C9A227;
+  --bs-btn-border-color:       #C9A227;
+  --bs-btn-hover-bg:           #C9A227;
+  --bs-btn-hover-color:        #fff;
+}
+.btn-secondary {
+  --bs-btn-bg:                 #1a1a1a;
+  --bs-btn-border-color:       #1a1a1a;
+  --bs-btn-hover-bg:           #333333;
+  --bs-btn-hover-border-color: #333333;
+  --bs-btn-color:              #fff;
+}
+
+
+
+
+/* ── Sidebar — override Bootstrap .nav link color ─────────── */
+.app-sidebar .nav {
+  --bs-nav-link-color:       #ffffff;
+  --bs-nav-link-hover-color: #C9A227;
+}
+
+/* ── Sidebar — all links white by default ─────────────────── */
+.app-sidebar .nav .nav-link,
+.app-sidebar .nav .nav-link p,
+.app-sidebar .nav .nav-link .nav-icon,
+.app-sidebar .nav .nav-link .nav-arrow {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* ── Sidebar — hover gold ─────────────────────────────────── */
+.app-sidebar .nav .nav-link:hover,
+.app-sidebar .nav .nav-link:hover p,
+.app-sidebar .nav .nav-link:hover .nav-icon,
+.app-sidebar .nav .nav-link:hover .nav-arrow {
+  color: #C9A227 !important;
+}
+
+/* ── Sidebar — active gold ────────────────────────────────── */
+.app-sidebar .nav .nav-link.active,
+.app-sidebar .nav .nav-link.active p,
+.app-sidebar .nav .nav-link.active .nav-icon {
+  color: #C9A227 !important;
+}
+
+/* ── Sidebar parent items (dropdown toggles) ──────────────── */
+.app-sidebar .nav-sidebar > .nav-item > .nav-link {
+  font-weight: 600 !important;
+  border-left: 3px solid transparent;
+}
+
+
+/* ── Navbar breadcrumb links ──────────────────────────────── */
+.app-header .breadcrumb-item a,
+.app-header .breadcrumb-item,
+.app-header .nav-link {
+  color: #ffffff !important;
+}
+
+.app-header .breadcrumb-item a:hover {
+  color: #C9A227 !important;
+}
+
+.app-header .breadcrumb-item.active {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* ── Breadcrumb separator ─────────────────────────────────── */
+.app-header .breadcrumb-item + .breadcrumb-item::before {
+  color: rgba(255, 255, 255, 0.4) !important;
+}

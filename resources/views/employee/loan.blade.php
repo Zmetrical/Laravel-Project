@@ -1,3 +1,5 @@
+{{-- resources/views/employee/loan.blade.php --}}
+
 @extends('layouts.main')
 
 @section('title', 'My Loans')
@@ -11,221 +13,113 @@
 
 @section('content')
 
-<div class="row mb-3">
-    <div class="col-12">
-        <h4 class="mb-0 fw-semibold">My Loans</h4>
-        <small class="text-muted">View your SSS and PAG-IBIG loan status</small>
-    </div>
+@include('components.alerts')
+
+<div class="mb-3">
+    <h4 class="mb-0">My Loans</h4>
+    <small class="text-muted">View your SSS and PAG-IBIG loan status and payment progress.</small>
 </div>
 
 {{-- Info Banner --}}
-<div class="callout callout-info mb-4" style="border-left-color: var(--bs-secondary);">
-    <div class="d-flex gap-2">
-        <i class="bi bi-info-circle-fill mt-1 flex-shrink-0 text-secondary"></i>
-        <div>
-            <strong class="text-secondary">How to Apply for SSS / PAG-IBIG Loans</strong>
-            <p class="mb-1 mt-1 small text-muted">
-                To apply for SSS or PAG-IBIG loans, please visit the respective government offices or their online portals directly.
-                Once approved, HR will encode your loan details into the system for automatic monthly deduction.
-            </p>
-            <div class="d-flex gap-3 mt-1">
-                <a href="https://www.sss.gov.ph" target="_blank" rel="noopener noreferrer" class="small text-secondary">
-                    🏛 SSS Website
-                </a>
-                <a href="https://www.pagibigfund.gov.ph" target="_blank" rel="noopener noreferrer" class="small text-secondary">
-                    🏠 PAG-IBIG Website
-                </a>
-            </div>
-        </div>
+<div class="callout callout-info mb-4">
+    <strong>How to Apply for SSS / PAG-IBIG Loans</strong>
+    <p class="mb-1 mt-1 small text-muted">
+        To apply for SSS or PAG-IBIG loans, please visit the respective government offices or their online portals.
+        Once approved, HR will encode your loan details into the system for automatic monthly deduction.
+    </p>
+    <div class="d-flex gap-3 mt-1">
+        <a href="https://www.sss.gov.ph" target="_blank" rel="noopener noreferrer" class="small">
+            SSS Website &rarr;
+        </a>
+        <a href="https://www.pagibigfund.gov.ph" target="_blank" rel="noopener noreferrer" class="small">
+            PAG-IBIG Website &rarr;
+        </a>
     </div>
 </div>
 
-{{-- Summary Cards --}}
-<div class="row g-3 mb-4" id="summary-section" style="display:none!important;">
-    <div class="col-md-4">
-        <div class="card card-outline card-secondary shadow-sm">
-            <div class="card-body py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="text-muted small">Active Loans</div>
-                        <div class="fs-3 fw-bold" id="stat-active">0</div>
-                    </div>
-                    <i class="bi bi-credit-card fs-1 text-secondary opacity-25"></i>
+@php
+    $activeLoans    = collect($loansData)->where('status', 'active')->values();
+    $completedLoans = collect($loansData)->where('status', 'completed')->values();
+    $totalBalance   = $activeLoans->sum('remaining_balance');
+@endphp
+
+@if(count($loansData) > 0)
+
+    {{-- Summary Cards --}}
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="info-box mb-0 shadow-sm">
+                <div class="info-box-content">
+                    <span class="info-box-text">Active Loans</span>
+                    <span class="info-box-number">{{ $activeLoans->count() }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="info-box mb-0 shadow-sm">
+                <div class="info-box-content">
+                    <span class="info-box-text">Completed Loans</span>
+                    <span class="info-box-number">{{ $completedLoans->count() }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="info-box mb-0 shadow-sm">
+                <div class="info-box-content">
+                    <span class="info-box-text">Total Remaining Balance</span>
+                    <span class="info-box-number">₱{{ number_format($totalBalance, 2) }}</span>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card card-outline card-secondary shadow-sm">
-            <div class="card-body py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="text-muted small">Completed Loans</div>
-                        <div class="fs-3 fw-bold" id="stat-completed">0</div>
-                    </div>
-                    <i class="bi bi-check-circle fs-1 text-secondary opacity-25"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card card-outline card-secondary shadow-sm">
-            <div class="card-body py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="text-muted small">Total Remaining Balance</div>
-                        <div class="fs-3 fw-bold text-secondary" id="stat-balance">₱0.00</div>
-                    </div>
-                    <i class="bi bi-wallet2 fs-1 text-secondary opacity-25"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+
+@endif
 
 {{-- Active Loans --}}
-<div id="active-loans-section">
-    <h5 class="mb-3 fw-semibold d-flex align-items-center gap-2">
-        <i class="bi bi-graph-up-arrow text-secondary"></i> Active Loans
-    </h5>
-    <div id="active-loans-container"></div>
-</div>
+@if($activeLoans->count() > 0)
 
-{{-- No Active Loans --}}
-<div id="no-loans-msg" class="card shadow-sm mb-4" style="display:none;">
-    <div class="card-body text-center py-5">
-        <i class="bi bi-credit-card fs-1 text-muted mb-3 d-block"></i>
-        <h5 class="fw-semibold">No Active Loans</h5>
-        <p class="text-muted mb-0">You don't have any active SSS or PAG-IBIG loans at the moment.</p>
-        <small class="text-muted">To apply for loans, please visit SSS or PAG-IBIG offices or their online portals.</small>
-    </div>
-</div>
+    <h5 class="mb-3">Active Loans</h5>
 
-{{-- Completed Loans --}}
-<div id="completed-loans-section" style="display:none;">
-    <h5 class="mb-3 fw-semibold d-flex align-items-center gap-2 mt-4">
-        <i class="bi bi-check-circle text-muted"></i> Completed Loans
-    </h5>
-    <div id="completed-loans-container"></div>
-</div>
+    @foreach($activeLoans as $loan)
+        @php
+            $progress = $loan['term_months'] > 0
+                ? min(100, round(($loan['payments_made'] / $loan['term_months']) * 100))
+                : 0;
+        @endphp
 
-@endsection
-
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-
-    // ─── Sample Data ───────────────────────────────────────────────────────────
-    const currentUser = { id: 'EMP-001', name: 'Juan dela Cruz' };
-
-    const loans = [
-        {
-            id: 'LOAN-2024-001',
-            employeeId: 'EMP-001',
-            loanTypeId: 'sss',
-            loanTypeName: 'SSS Salary Loan',
-            amount: 24000.00,
-            monthlyAmortization: 1000.00,
-            term: 24,
-            paymentsMade: 10,
-            remainingBalance: 14000.00,
-            startDate: '2024-01-15',
-            status: 'active',
-            completedDate: null,
-        },
-        {
-            id: 'LOAN-2024-002',
-            employeeId: 'EMP-001',
-            loanTypeId: 'pagibig',
-            loanTypeName: 'PAG-IBIG Multi-Purpose Loan',
-            amount: 50000.00,
-            monthlyAmortization: 2083.33,
-            term: 24,
-            paymentsMade: 6,
-            remainingBalance: 37500.00,
-            startDate: '2024-06-01',
-            status: 'active',
-            completedDate: null,
-        },
-        {
-            id: 'LOAN-2022-001',
-            employeeId: 'EMP-001',
-            loanTypeId: 'sss',
-            loanTypeName: 'SSS Salary Loan',
-            amount: 15000.00,
-            monthlyAmortization: 625.00,
-            term: 24,
-            paymentsMade: 24,
-            remainingBalance: 0.00,
-            startDate: '2022-03-01',
-            status: 'completed',
-            completedDate: '2024-03-01',
-        },
-    ];
-
-    // ─── Config ────────────────────────────────────────────────────────────────
-    const typeConfig = {
-        sss:    { label: 'SSS',    badgeClass: 'badge text-bg-secondary' },
-        pagibig:{ label: 'PAG-IBIG', badgeClass: 'badge text-bg-primary' },
-    };
-
-    // ─── Helpers ───────────────────────────────────────────────────────────────
-    function formatPeso(amount) {
-        return '₱' + parseFloat(amount || 0).toLocaleString('en-PH', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-    }
-
-    function formatDate(dateStr) {
-        if (!dateStr) return 'N/A';
-        return new Date(dateStr).toLocaleDateString('en-PH', {
-            year: 'numeric', month: 'short', day: 'numeric'
-        });
-    }
-
-    function getProgress(paymentsMade, term) {
-        if (!term) return 0;
-        return Math.round((paymentsMade / term) * 100);
-    }
-
-    function getConfig(loanTypeId) {
-        return typeConfig[loanTypeId] || typeConfig.sss;
-    }
-
-    // ─── Render Active Loan Card ───────────────────────────────────────────────
-    function renderActiveLoan(loan) {
-        const progress = getProgress(loan.paymentsMade, loan.term);
-        const cfg = getConfig(loan.loanTypeId);
-
-        return `
-        <div class="card shadow-sm mb-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-credit-card fs-5 text-secondary"></i>
-                    <div>
-                        <div class="fw-semibold">${loan.loanTypeName}</div>
-                        <small class="text-muted">Loan ID: ${loan.id}</small>
-                    </div>
+        <div class="card card-outline card-secondary mb-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">{{ $loan['loan_type_name'] }}</h6>
+                <div class="card-tools">
+                    <span class="badge badge-secondary">Active</span>
                 </div>
-                <span class="badge text-bg-secondary">
-                    <i class="bi bi-check-circle me-1"></i>Active
-                </span>
             </div>
             <div class="card-body">
 
                 {{-- Amounts --}}
                 <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <div class="bg-light rounded p-3">
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded">
                             <div class="text-muted small mb-1">Total Loan Amount</div>
-                            <div class="fs-4 fw-bold">${formatPeso(loan.amount)}</div>
+                            <div class="font-weight-bold h5 mb-0">
+                                ₱{{ number_format($loan['amount'], 2) }}
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="bg-light rounded p-3">
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded">
                             <div class="text-muted small mb-1">Monthly Deduction</div>
-                            <div class="fs-4 fw-bold text-secondary">${formatPeso(loan.monthlyAmortization)}</div>
+                            <div class="font-weight-bold h5 mb-0">
+                                ₱{{ number_format($loan['monthly_amortization'], 2) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded">
+                            <div class="text-muted small mb-1">Remaining Balance</div>
+                            <div class="font-weight-bold h5 mb-0">
+                                ₱{{ number_format($loan['remaining_balance'], 2) }}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -234,117 +128,87 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="mb-3">
                     <div class="d-flex justify-content-between mb-1">
                         <span class="text-muted small">Payment Progress</span>
-                        <span class="small fw-semibold">${loan.paymentsMade} of ${loan.term} payments</span>
+                        <span class="small font-weight-bold">
+                            {{ $loan['payments_made'] }} of {{ $loan['term_months'] }} payments
+                        </span>
                     </div>
-                    <div class="progress" style="height: 18px;">
+                    <div class="progress" style="height: 16px;">
                         <div class="progress-bar bg-secondary"
                              role="progressbar"
-                             style="width: ${progress}%"
-                             aria-valuenow="${progress}"
+                             style="width: {{ $progress }}%"
+                             aria-valuenow="{{ $progress }}"
                              aria-valuemin="0"
                              aria-valuemax="100">
-                            ${progress}%
+                            {{ $progress }}%
                         </div>
-                    </div>
-                </div>
-
-                {{-- Remaining Balance --}}
-                <div class="rounded p-3 mb-3 border border-secondary-subtle">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-muted small mb-1">Remaining Balance</div>
-                            <div class="fs-3 fw-bold text-secondary">${formatPeso(loan.remainingBalance)}</div>
-                        </div>
-                        <i class="bi bi-wallet2 fs-1 text-secondary opacity-25"></i>
                     </div>
                 </div>
 
                 {{-- Meta --}}
-                <div class="row g-2 small mb-3">
+                <div class="row small mb-0">
                     <div class="col-md-6">
-                        <span class="text-muted">Start Date: </span>
-                        <span class="fw-semibold">
-                            <i class="bi bi-calendar3 me-1"></i>${formatDate(loan.startDate)}
+                        <span class="text-muted">Start Date:</span>
+                        <span class="font-weight-bold ml-1">
+                            {{ \Carbon\Carbon::parse($loan['start_date'])->format('M d, Y') }}
                         </span>
                     </div>
                     <div class="col-md-6">
-                        <span class="text-muted">Payments Made: </span>
-                        <span class="fw-semibold">${loan.paymentsMade} time(s)</span>
+                        <span class="text-muted">Loan Type:</span>
+                        <span class="font-weight-bold ml-1">{{ strtoupper($loan['loan_type']) }}</span>
                     </div>
                 </div>
 
-                {{-- Next Payment Notice --}}
-                ${loan.paymentsMade < loan.term ? `
-                <div class="callout callout-info py-2 mb-0" style="border-left-color: var(--bs-secondary);">
-                    <small class="text-muted d-block">Next Deduction</small>
-                    <small>${formatPeso(loan.monthlyAmortization)} will be deducted in the next payroll period.</small>
-                </div>` : ''}
+                @if($loan['notes'])
+                    <div class="mt-2">
+                        <small class="text-muted">Note: {{ $loan['notes'] }}</small>
+                    </div>
+                @endif
 
             </div>
-        </div>`;
-    }
+        </div>
+    @endforeach
 
-    // ─── Render Completed Loan Row ─────────────────────────────────────────────
-    function renderCompletedLoan(loan) {
-        const cfg = getConfig(loan.loanTypeId);
-        return `
-        <div class="card shadow-sm mb-2">
+@else
+
+    {{-- No Active Loans --}}
+    <div class="card mb-4">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-credit-card fa-2x text-muted mb-3 d-block"></i>
+            <h5>No Active Loans</h5>
+            <p class="text-muted mb-0">You don't have any active SSS or PAG-IBIG loans at the moment.</p>
+            <small class="text-muted">To apply, please visit SSS or PAG-IBIG offices or their online portals.</small>
+        </div>
+    </div>
+
+@endif
+
+{{-- Completed Loans --}}
+@if($completedLoans->count() > 0)
+
+    <h5 class="mb-3 mt-4">Completed Loans</h5>
+
+    @foreach($completedLoans as $loan)
+        <div class="card mb-2">
             <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center gap-3">
-                        <i class="bi bi-check-circle-fill text-muted fs-5"></i>
-                        <div>
-                            <div class="d-flex align-items-center gap-2 mb-1">
-                                <span class="${cfg.badgeClass} small">${loan.loanTypeName}</span>
-                                <span class="text-muted small">• ${loan.id}</span>
-                            </div>
-                            <div class="small">
-                                <span class="text-muted">Amount: </span>
-                                <span class="fw-semibold">${formatPeso(loan.amount)}</span>
-                                <span class="text-muted ms-3">Completed: </span>
-                                <span class="fw-semibold">${formatDate(loan.completedDate)}</span>
-                            </div>
+                    <div>
+                        <div class="font-weight-bold mb-1">{{ $loan['loan_type_name'] }}</div>
+                        <div class="small text-muted">
+                            Amount: ₱{{ number_format($loan['amount'], 2) }}
+                            &nbsp;&bull;&nbsp;
+                            {{ $loan['payments_made'] }} payments
+                            &nbsp;&bull;&nbsp;
+                            @if($loan['completed_date'])
+                                Completed: {{ \Carbon\Carbon::parse($loan['completed_date'])->format('M d, Y') }}
+                            @endif
                         </div>
                     </div>
-                    <span class="badge text-bg-secondary">✓ Paid</span>
+                    <span class="badge badge-secondary">Paid</span>
                 </div>
             </div>
-        </div>`;
-    }
+        </div>
+    @endforeach
 
-    // ─── Main Render ───────────────────────────────────────────────────────────
-    function renderAll() {
-        const myLoans       = loans.filter(l => l.employeeId === currentUser.id);
-        const activeLoans   = myLoans.filter(l => l.status === 'active');
-        const completedLoans= myLoans.filter(l => l.status === 'completed');
+@endif
 
-        // Summary
-        if (myLoans.length > 0) {
-            document.getElementById('summary-section').style.removeProperty('display');
-            document.getElementById('stat-active').textContent    = activeLoans.length;
-            document.getElementById('stat-completed').textContent  = completedLoans.length;
-            const totalBalance = activeLoans.reduce((sum, l) => sum + parseFloat(l.remainingBalance || 0), 0);
-            document.getElementById('stat-balance').textContent   = formatPeso(totalBalance);
-        }
-
-        // Active Loans
-        if (activeLoans.length > 0) {
-            document.getElementById('active-loans-container').innerHTML =
-                activeLoans.map(renderActiveLoan).join('');
-        } else {
-            document.getElementById('active-loans-section').style.display = 'none';
-            document.getElementById('no-loans-msg').style.display = '';
-        }
-
-        // Completed Loans
-        if (completedLoans.length > 0) {
-            document.getElementById('completed-loans-section').style.display = '';
-            document.getElementById('completed-loans-container').innerHTML =
-                completedLoans.map(renderCompletedLoan).join('');
-        }
-    }
-
-    renderAll();
-});
-</script>
-@endpush
+@endsection

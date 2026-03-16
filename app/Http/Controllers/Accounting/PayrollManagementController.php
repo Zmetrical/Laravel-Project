@@ -7,8 +7,5 @@ use Illuminate\Http\Request;
 
 class PayrollManagementController extends Controller
 {
-    public function index()
-    {
-        return view('accounting.payroll.show');
-    }
+
 }

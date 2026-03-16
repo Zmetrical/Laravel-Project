@@ -1,3 +1,5 @@
+{{-- resources/views/employee/payroll.blade.php --}}
+
 @extends('layouts.main')
 
 @section('title', 'Payroll & Payslips')
@@ -5,197 +7,209 @@
 @section('breadcrumb')
     <ol class="breadcrumb mb-0">
         <li class="breadcrumb-item"><a href="{{ url('/') }}">Home</a></li>
-        <li class="breadcrumb-item active">Payroll & Payslips</li>
+        <li class="breadcrumb-item active">Payroll &amp; Payslips</li>
     </ol>
 @endsection
 
 @section('content')
 
+@include('components.alerts')
+
 {{-- Page Header --}}
 <div class="mb-3">
     <h4 class="mb-1">Payroll &amp; Payslips</h4>
-    <p class="text-muted mb-0">View your salary details and government contributions</p>
+    <p class="text-muted mb-0">View your salary details and government contributions.</p>
 </div>
 
-{{-- Suspension Notice (conditionally rendered via JS) --}}
-<div id="suspension-notice" class="alert alert-secondary border-start border-5 border-secondary d-none" role="alert">
-    <div class="d-flex align-items-start gap-3">
-        <i class="bi bi-slash-circle fs-3 text-secondary"></i>
-        <div>
-            <h5 class="alert-heading mb-1">Account Suspended</h5>
-            <p class="mb-2">Your account has been suspended due to a negative payroll balance during the 16th–End cutoff period.</p>
-            <p class="mb-2 small"><strong>Reason:</strong> Your deductions exceeded your gross pay, resulting in a negative net pay. Deferred balances are only allowed for 1st–15th cutoff periods per company policy.</p>
-            <p class="mb-0 small"><strong>Action Required:</strong> Please contact HR immediately to resolve this issue.</p>
+{{-- Latest Payslip Card --}}
+<div id="latest-card" class="card card-outline card-primary mb-4 d-none">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Latest Payslip</h5>
+        <div class="card-tools">
+            <small id="latest-period-label" class="text-muted me-2"></small>
+            <span class="badge badge-success">Released</span>
         </div>
-    </div>
-</div>
-
-{{-- Latest Payslip Summary --}}
-<div id="latest-payslip-card" class="card shadow-sm mb-4 d-none">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <div>
-            <h5 class="card-title mb-0">Latest Payslip</h5>
-            <small id="latest-period" class="text-muted"></small>
-        </div>
-        <span class="badge bg-secondary">Released</span>
     </div>
     <div class="card-body">
         <div class="row g-3 mb-3">
             <div class="col-md-4">
-                <div class="p-3 border rounded">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <i class="bi bi-graph-up text-secondary"></i>
-                        <small class="text-muted">Gross Pay</small>
+                <div class="info-box mb-0 shadow-none border">
+                    <div class="info-box-content">
+                        <span class="info-box-text">Gross Pay</span>
+                        <span class="info-box-number" id="latest-gross">₱0.00</span>
                     </div>
-                    <h4 id="latest-gross" class="mb-0">₱0.00</h4>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="p-3 border rounded">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <i class="bi bi-graph-down text-muted"></i>
-                        <small class="text-muted">Total Deductions</small>
+                <div class="info-box mb-0 shadow-none border">
+                    <div class="info-box-content">
+                        <span class="info-box-text">Total Deductions</span>
+                        <span class="info-box-number" id="latest-deductions">₱0.00</span>
                     </div>
-                    <h4 id="latest-deductions" class="mb-0">₱0.00</h4>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="p-3 border rounded bg-body-secondary">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <i class="bi bi-cash-stack text-secondary"></i>
-                        <small class="text-muted">Net Pay</small>
+                <div class="info-box mb-0 shadow-none border">
+                    <div class="info-box-content">
+                        <span class="info-box-text">Net Pay</span>
+                        <span class="info-box-number fw-bold" id="latest-net">₱0.00</span>
                     </div>
-                    <h3 id="latest-net" class="mb-0 text-secondary fw-bold">₱0.00</h3>
                 </div>
             </div>
         </div>
         <div class="d-flex gap-2">
-            <button id="btn-view-latest" class="btn btn-outline-primary w-50" onclick="openBreakdownModal(latestPayslip)">
-                <i class="bi bi-eye me-1"></i> View Breakdown
+            <button class="btn btn-outline-primary btn-sm" id="btn-view-latest">
+                View Breakdown
             </button>
-            <button id="btn-download-latest" class="btn btn-outline-secondary w-50" onclick="downloadPayslip(latestPayslip)">
-                <i class="bi bi-download me-1"></i> Download PDF
+            <button class="btn btn-outline-secondary btn-sm" id="btn-download-latest">
+                Download PDF
             </button>
         </div>
     </div>
 </div>
 
 {{-- Payslip History --}}
-<div class="card shadow-sm">
+<div class="card card-outline card-secondary">
     <div class="card-header">
         <h5 class="card-title mb-0">Payslip History</h5>
-    </div>
-    <div class="card-body">
-
-        {{-- Filters --}}
-        <div class="row g-2 mb-3">
-            <div class="col-md-4">
-                <select id="filter-month" class="form-select form-select-sm" onchange="applyFilters()">
-                    <option value="all">All Months</option>
-                    <option value="January">January</option>
-                    <option value="February">February</option>
-                    <option value="March">March</option>
-                    <option value="April">April</option>
-                    <option value="May">May</option>
-                    <option value="June">June</option>
-                    <option value="July">July</option>
-                    <option value="August">August</option>
-                    <option value="September">September</option>
-                    <option value="October">October</option>
-                    <option value="November">November</option>
-                    <option value="December">December</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <select id="filter-year" class="form-select form-select-sm" onchange="applyFilters()">
-                    {{-- Populated by JS --}}
-                </select>
-            </div>
+        <div class="card-tools d-flex gap-2">
+            <select id="filter-year" class="form-control form-control-sm" style="width:90px;"></select>
+            <select id="filter-month" class="form-control form-control-sm" style="width:130px;">
+                <option value="">All Months</option>
+                @foreach(['January','February','March','April','May','June','July','August','September','October','November','December'] as $m)
+                    <option value="{{ $m }}">{{ $m }}</option>
+                @endforeach
+            </select>
         </div>
+    </div>
+    <div class="card-body p-0">
 
-        {{-- Payslip List --}}
-        <div id="payslip-list"></div>
+        {{-- Table --}}
+        <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0" id="payslip-table">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th>Type</th>
+                        <th class="text-end">Gross Pay</th>
+                        <th class="text-end">Deductions</th>
+                        <th class="text-end">Net Pay</th>
+                        <th>Pay Date</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="payslip-tbody">
+                    {{-- Populated by JS --}}
+                </tbody>
+            </table>
+        </div>
 
         {{-- Empty State --}}
         <div id="empty-state" class="text-center py-5 d-none">
-            <i class="bi bi-file-earmark-text fs-1 text-muted d-block mb-2"></i>
-            <p class="text-muted mb-1">No Payslips Available</p>
+            <i class="fas fa-file-invoice-dollar fa-2x text-muted mb-2 d-block"></i>
+            <p class="text-muted mb-1">No payslips found.</p>
             <small class="text-muted">Your payslips will appear here once released by Accounting.</small>
         </div>
 
     </div>
 </div>
 
-{{-- ===== BREAKDOWN MODAL ===== --}}
+{{-- ── Breakdown Modal ──────────────────────────────────────────────── --}}
 <div class="modal fade" id="breakdownModal" tabindex="-1" aria-labelledby="breakdownModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
 
             <div class="modal-header">
-                <div>
-                    <h5 class="modal-title mb-0" id="breakdownModalLabel">Payslip Breakdown</h5>
-                    <small id="modal-period" class="text-muted"></small>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="breakdownModalLabel">Payslip Breakdown</h5>
+                <button type="button" class="close" onclick="closeModal()" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
 
             <div class="modal-body">
 
-                {{-- Deferred Notice --}}
-                <div id="modal-deferred-notice" class="alert alert-secondary border-start border-4 border-secondary d-none mb-3">
-                    <div class="d-flex align-items-start gap-2">
-                        <i class="bi bi-exclamation-triangle-fill mt-1"></i>
-                        <div>
-                            <strong>Deferred from Previous Period</strong>
-                            <p class="mb-1 small">Unpaid deductions from the previous payroll period have been applied to this period.</p>
-                            <div class="d-flex justify-content-between">
-                                <span>Previous Deferred Amount</span>
-                                <strong id="modal-deferred-amount"></strong>
-                            </div>
-                            <small class="text-muted">This amount is included in Total Deductions below.</small>
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <div>
+                        <strong id="modal-employee-name">{{ auth()->user()->fullName }}</strong>
+                        <div class="text-muted small">
+                            {{ auth()->user()->position }} &mdash; {{ auth()->user()->department }}
                         </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="font-weight-bold" id="modal-period-label"></div>
+                        <div class="text-muted small">Pay Date: <span id="modal-pay-date"></span></div>
                     </div>
                 </div>
 
+                {{-- Deferred Balance Notice --}}
+                <div id="modal-deferred-notice" class="alert alert-warning alert-dismissible d-none mb-3">
+                    <h6 class="alert-heading mb-1">Deferred Balance Applied</h6>
+                    <p class="mb-1 small">
+                        An unpaid balance of <strong id="modal-deferred-amount"></strong> from the previous period
+                        has been carried over and is included in your total deductions.
+                    </p>
+                </div>
+
                 {{-- Earnings --}}
-                <h6 class="text-uppercase text-muted small fw-semibold mb-2">Earnings</h6>
+                <p class="text-xs text-uppercase text-muted font-weight-bold mb-1">Earnings</p>
                 <table class="table table-sm table-borderless mb-3">
-                    <tbody id="modal-earnings"></tbody>
+                    <tbody id="modal-earnings-body"></tbody>
                     <tfoot>
-                        <tr class="fw-semibold border-top">
+                        <tr class="border-top font-weight-bold">
                             <td>Gross Pay</td>
-                            <td class="text-end" id="modal-gross"></td>
+                            <td class="text-right" id="modal-gross-pay"></td>
                         </tr>
                     </tfoot>
                 </table>
 
-                {{-- Deductions --}}
-                <h6 class="text-uppercase text-muted small fw-semibold mb-2">Deductions</h6>
+                {{-- Statutory & Attendance Deductions --}}
+                <p class="text-xs text-uppercase text-muted font-weight-bold mb-1">Deductions</p>
                 <table class="table table-sm table-borderless mb-3">
-                    <tbody id="modal-deductions"></tbody>
+                    <tbody id="modal-deductions-body"></tbody>
                     <tfoot>
-                        <tr class="fw-semibold border-top text-danger">
-                            <td>Total Deductions</td>
-                            <td class="text-end" id="modal-total-deductions"></td>
+                        <tr class="border-top font-weight-bold">
+                            <td>Subtotal</td>
+                            <td class="text-right" id="modal-deductions-subtotal"></td>
                         </tr>
                     </tfoot>
                 </table>
 
-                {{-- Net Pay --}}
-                <div class="p-3 bg-body-secondary rounded border">
+                {{-- Loan Deductions --}}
+                <div id="modal-loans-section">
+                    <p class="text-xs text-uppercase text-muted font-weight-bold mb-1">Loans</p>
+                    <table class="table table-sm table-borderless mb-3">
+                        <tbody id="modal-loans-body"></tbody>
+                        <tfoot>
+                            <tr class="border-top font-weight-bold">
+                                <td>Subtotal</td>
+                                <td class="text-right" id="modal-loans-subtotal"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                {{-- Total Deductions --}}
+                <div class="d-flex justify-content-between border-top pt-2 mb-3">
+                    <span class="font-weight-bold">Total Deductions</span>
+                    <span class="font-weight-bold" id="modal-total-deductions"></span>
+                </div>
+                <div class="callout callout-info mb-0">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Net Pay</h5>
-                        <h3 class="mb-0 text-secondary fw-bold" id="modal-net-pay"></h3>
+                        <h4 class="mb-0 font-weight-bold" id="modal-net-pay"></h4>
                     </div>
+                    <small id="modal-notes-wrap" class="text-muted d-none">
+                        Note: <span id="modal-notes"></span>
+                    </small>
                 </div>
 
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="downloadPayslip(activePayslip)">
-                    <i class="bi bi-download me-1"></i> Download PDF
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-modal-download">
+                    Download PDF
                 </button>
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal()">Close</button>
             </div>
 
         </div>
@@ -207,377 +221,277 @@
 
 @push('scripts')
 <script>
-const currentEmployee = {
-    id: 'EMP001',
-    fullName: 'Juan dela Cruz',
-    department: 'Operations',
-    position: 'Supervisor',
-    isSuspended: false
-};
+// ── Data from server ──────────────────────────────────────────────────────────
+const PAYSLIPS = @json($payslips);
 
-const payslips = [
-    {
-        id: 'PAY-2025-012',
-        period: 'June 16-30, 2025',
-        payDate: '2025-07-05',
-        basicPay: 12500.00,
-        overtime: 1200.00,
-        nightDiff: 450.00,
-        leavePay: 0,
-        restDayPay: 0,
-        restDayType: null,
-        restDayHasNightShift: false,
-        holidayPay: 0,
-        additionalShiftPay: 0,
-        additionalShiftCount: 0,
-        allowances: 1500.00,
-        grossPay: 15650.00,
-        sss: 900.00,
-        philHealth: 437.50,
-        pagibig: 100.00,
-        tax: 312.50,
-        loanDeductions: 500.00,
-        lateDeductions: 0,
-        undertimeDeductions: 0,
-        absentDeductions: 0,
-        otherDeductions: 0,
-        totalDeductions: 2250.00,
-        netPay: 13400.00,
-        deferredBalance: 0,
-        released: true
-    },
-    {
-        id: 'PAY-2025-011',
-        period: 'June 1-15, 2025',
-        payDate: '2025-06-20',
-        basicPay: 12500.00,
-        overtime: 0,
-        nightDiff: 0,
-        leavePay: 1041.67,
-        restDayPay: 1625.00,
-        restDayType: 'regular',
-        restDayHasNightShift: false,
-        holidayPay: 0,
-        additionalShiftPay: 0,
-        additionalShiftCount: 0,
-        allowances: 1500.00,
-        grossPay: 16666.67,
-        sss: 900.00,
-        philHealth: 437.50,
-        pagibig: 100.00,
-        tax: 416.67,
-        loanDeductions: 500.00,
-        lateDeductions: 150.00,
-        undertimeDeductions: 0,
-        absentDeductions: 0,
-        otherDeductions: 0,
-        totalDeductions: 2504.17,
-        netPay: 14162.50,
-        deferredBalance: 0,
-        released: true
-    },
-    {
-        id: 'PAY-2025-010',
-        period: 'May 16-31, 2025',
-        payDate: '2025-06-05',
-        basicPay: 12500.00,
-        overtime: 800.00,
-        nightDiff: 0,
-        leavePay: 0,
-        restDayPay: 0,
-        restDayType: null,
-        restDayHasNightShift: false,
-        holidayPay: 2500.00,
-        additionalShiftPay: 2600.00,
-        additionalShiftCount: 2,
-        allowances: 1500.00,
-        grossPay: 19900.00,
-        sss: 900.00,
-        philHealth: 437.50,
-        pagibig: 100.00,
-        tax: 650.00,
-        loanDeductions: 500.00,
-        lateDeductions: 0,
-        undertimeDeductions: 200.00,
-        absentDeductions: 0,
-        otherDeductions: 0,
-        totalDeductions: 2787.50,
-        netPay: 17112.50,
-        deferredBalance: 320.00,
-        released: true
-    },
-    {
-        id: 'PAY-2025-009',
-        period: 'May 1-15, 2025',
-        payDate: '2025-05-20',
-        basicPay: 12500.00,
-        overtime: 0,
-        nightDiff: 800.00,
-        leavePay: 0,
-        restDayPay: 0,
-        restDayType: null,
-        restDayHasNightShift: false,
-        holidayPay: 0,
-        additionalShiftPay: 0,
-        additionalShiftCount: 0,
-        allowances: 1500.00,
-        grossPay: 14800.00,
-        sss: 900.00,
-        philHealth: 437.50,
-        pagibig: 100.00,
-        tax: 312.50,
-        loanDeductions: 500.00,
-        lateDeductions: 320.00,
-        undertimeDeductions: 0,
-        absentDeductions: 0,
-        otherDeductions: 0,
-        totalDeductions: 2570.00,
-        netPay: 12230.00,
-        deferredBalance: 0,
-        released: true
-    }
-];
+// ── State ─────────────────────────────────────────────────────────────────────
+let activePayslip = null;
 
-// ============================================================
-// STATE
-// ============================================================
-let filteredPayslips  = [...payslips];
-let latestPayslip     = payslips.length ? payslips[0] : null;
-let activePayslip     = null;
-
-// ============================================================
-// INIT
-// ============================================================
+// ── Boot ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    if (currentEmployee.isSuspended) {
-        document.getElementById('suspension-notice').classList.remove('d-none');
-    }
-
     populateYearFilter();
     renderLatestCard();
-    applyFilters();
+    renderTable();
+
+    document.getElementById('filter-year').addEventListener('change', renderTable);
+    document.getElementById('filter-month').addEventListener('change', renderTable);
+
+    document.getElementById('btn-view-latest')?.addEventListener('click', () => {
+        if (PAYSLIPS.length) openModal(PAYSLIPS[0]);
+    });
+
+    document.getElementById('btn-download-latest')?.addEventListener('click', () => {
+        if (PAYSLIPS.length) downloadPayslip(PAYSLIPS[0]);
+    });
+
+    document.getElementById('btn-modal-download')?.addEventListener('click', () => {
+        if (activePayslip) downloadPayslip(activePayslip);
+    });
 });
 
-// ============================================================
-// YEAR FILTER
-// ============================================================
+// ── Year filter ───────────────────────────────────────────────────────────────
 function populateYearFilter() {
-    const yearSelect = document.getElementById('filter-year');
-    const years = [...new Set(payslips.map(p => extractYear(p.period)))].sort((a, b) => b - a);
+    const sel   = document.getElementById('filter-year');
+    const years = [...new Set(PAYSLIPS.map(p => p.pay_date?.substring(0, 4)).filter(Boolean))].sort().reverse();
 
-    if (!years.length) years.push(new Date().getFullYear());
+    const allOpt = document.createElement('option');
+    allOpt.value = '';
+    allOpt.textContent = 'All Years';
+    sel.appendChild(allOpt);
 
     years.forEach(y => {
         const opt = document.createElement('option');
         opt.value = y;
         opt.textContent = y;
-        yearSelect.appendChild(opt);
+        sel.appendChild(opt);
     });
 }
 
-function extractYear(period) {
-    const m = period.match(/\d{4}/);
-    return m ? parseInt(m[0]) : new Date().getFullYear();
-}
-
-// ============================================================
-// LATEST PAYSLIP CARD
-// ============================================================
+// ── Latest card ───────────────────────────────────────────────────────────────
 function renderLatestCard() {
-    if (!latestPayslip) return;
-
-    document.getElementById('latest-payslip-card').classList.remove('d-none');
-    document.getElementById('latest-period').textContent     = latestPayslip.period;
-    document.getElementById('latest-gross').textContent      = formatPeso(latestPayslip.grossPay);
-    document.getElementById('latest-deductions').textContent = formatPeso(latestPayslip.totalDeductions);
-    document.getElementById('latest-net').textContent        = formatPeso(latestPayslip.netPay);
+    if (!PAYSLIPS.length) return;
+    const p = PAYSLIPS[0];
+    document.getElementById('latest-card').classList.remove('d-none');
+    document.getElementById('latest-period-label').textContent = p.period;
+    document.getElementById('latest-gross').textContent        = peso(p.gross_pay);
+    document.getElementById('latest-deductions').textContent   = peso(p.total_deductions);
+    document.getElementById('latest-net').textContent          = peso(p.net_pay);
 }
 
-// ============================================================
-// FILTER
-// ============================================================
-function applyFilters() {
-    const month = document.getElementById('filter-month').value;
+// ── Table ─────────────────────────────────────────────────────────────────────
+function renderTable() {
     const year  = document.getElementById('filter-year').value;
+    const month = document.getElementById('filter-month').value.toLowerCase();
 
-    filteredPayslips = payslips.filter(p => {
-        const matchMonth = month === 'all' || p.period.toLowerCase().includes(month.toLowerCase());
-        const matchYear  = p.period.includes(year);
-        return matchMonth && matchYear;
+    const filtered = PAYSLIPS.filter(p => {
+        const matchYear  = !year  || (p.pay_date?.startsWith(year));
+        const matchMonth = !month || p.period.toLowerCase().includes(month);
+        return matchYear && matchMonth;
     });
 
-    renderPayslipList();
-}
-
-// ============================================================
-// RENDER LIST
-// ============================================================
-function renderPayslipList() {
-    const container  = document.getElementById('payslip-list');
+    const tbody      = document.getElementById('payslip-tbody');
     const emptyState = document.getElementById('empty-state');
-    container.innerHTML = '';
+    tbody.innerHTML  = '';
 
-    if (!filteredPayslips.length) {
+    if (!filtered.length) {
         emptyState.classList.remove('d-none');
         return;
     }
 
     emptyState.classList.add('d-none');
 
-    filteredPayslips.forEach(p => {
-        const row = document.createElement('div');
-        row.className = 'border rounded p-3 mb-2 d-flex align-items-center justify-content-between gap-3';
-        row.innerHTML = `
-            <div class="d-flex align-items-center gap-3">
-                <div class="bg-body-secondary rounded p-2 text-secondary">
-                    <i class="bi bi-file-earmark-text fs-5"></i>
-                </div>
-                <div>
-                    <div class="fw-semibold">${p.period}</div>
-                    <small class="text-muted">Pay Date: ${formatDate(p.payDate)}</small>
-                </div>
-            </div>
-            <div class="d-flex align-items-center gap-4">
-                <div class="text-end d-none d-md-block">
-                    <div class="fw-semibold">${formatPeso(p.netPay)}</div>
-                    <small class="text-muted">Net Pay</small>
-                </div>
-                <div class="d-flex gap-1">
-                    <button class="btn btn-sm btn-outline-primary" title="View Breakdown" onclick="openBreakdownModal(payslips.find(x => x.id === '${p.id}'))">
-                        <i class="bi bi-eye"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary" title="Download PDF" onclick="downloadPayslip(payslips.find(x => x.id === '${p.id}'))">
-                        <i class="bi bi-download"></i>
-                    </button>
-                </div>
-            </div>
+    filtered.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="align-middle">${esc(p.period)}</td>
+            <td class="align-middle">
+                <span class="badge badge-secondary">${periodTypeLabel(p.period_type)}</span>
+            </td>
+            <td class="align-middle text-right">${peso(p.gross_pay)}</td>
+            <td class="align-middle text-right">${peso(p.total_deductions)}</td>
+            <td class="align-middle text-right font-weight-bold">${peso(p.net_pay)}</td>
+            <td class="align-middle">${formatDate(p.pay_date)}</td>
+            <td class="align-middle text-center">
+                <button class="btn btn-xs btn-outline-primary mr-1" title="View Breakdown"
+                    onclick="openModal(PAYSLIPS.find(x => x.id === ${p.id}))">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-xs btn-outline-secondary" title="Download PDF"
+                    onclick="downloadPayslip(PAYSLIPS.find(x => x.id === ${p.id}))">
+                    <i class="fas fa-download"></i>
+                </button>
+            </td>
         `;
-        container.appendChild(row);
+        tbody.appendChild(tr);
     });
 }
 
-// ============================================================
-// BREAKDOWN MODAL
-// ============================================================
-function openBreakdownModal(payslip) {
+// ── Breakdown Modal ───────────────────────────────────────────────────────────
+function openModal(payslip) {
     if (!payslip) return;
     activePayslip = payslip;
 
-    document.getElementById('modal-period').textContent = payslip.period;
+    document.getElementById('modal-period-label').textContent = payslip.period;
+    document.getElementById('modal-pay-date').textContent     = formatDate(payslip.pay_date);
 
-    // ── Deferred Notice
+    // Deferred notice
     const deferredNotice = document.getElementById('modal-deferred-notice');
-    if ((payslip.deferredBalance || 0) > 0) {
+    if (payslip.deferred_balance > 0) {
+        document.getElementById('modal-deferred-amount').textContent = peso(payslip.deferred_balance);
         deferredNotice.classList.remove('d-none');
-        document.getElementById('modal-deferred-amount').textContent = formatPeso(payslip.deferredBalance);
     } else {
         deferredNotice.classList.add('d-none');
     }
 
-    // ── Earnings
-    const earningsRows = buildEarningsRows(payslip);
-    document.getElementById('modal-earnings').innerHTML = earningsRows;
-    document.getElementById('modal-gross').textContent  = formatPeso(payslip.grossPay);
+    // Earnings
+    document.getElementById('modal-earnings-body').innerHTML = buildEarnings(payslip);
+    document.getElementById('modal-gross-pay').textContent   = peso(payslip.gross_pay);
 
-    // ── Deductions
-    document.getElementById('modal-deductions').innerHTML  = buildDeductionRows(payslip);
-    document.getElementById('modal-total-deductions').textContent = formatPeso(payslip.totalDeductions);
+    // Deductions — mandatory (statutory + attendance)
+    document.getElementById('modal-deductions-body').innerHTML     = buildMandatoryDeductions(payslip);
+    document.getElementById('modal-deductions-subtotal').textContent = peso(calcMandatoryTotal(payslip));
 
-    // ── Net Pay
-    document.getElementById('modal-net-pay').textContent = formatPeso(payslip.netPay);
-
-    const modal = new bootstrap.Modal(document.getElementById('breakdownModal'));
-    modal.show();
-}
-
-function buildEarningsRows(p) {
-    const rows = [];
-
-    rows.push(row('Basic Pay', p.basicPay));
-
-    if ((p.overtime || 0) > 0) rows.push(row('Overtime Pay', p.overtime));
-
-    if ((p.restDayPay || 0) > 0) {
-        const label = restDayLabel(p);
-        rows.push(row(label, p.restDayPay));
+    // Deductions — loans
+    const { html: loanHtml, total: loanTotal } = buildLoanDeductions(payslip);
+    const loansSection = document.getElementById('modal-loans-section');
+    if (loanTotal > 0) {
+        document.getElementById('modal-loans-body').innerHTML    = loanHtml;
+        document.getElementById('modal-loans-subtotal').textContent = peso(loanTotal);
+        loansSection.classList.remove('d-none');
     } else {
-        if ((p.nightDiff || 0) > 0) rows.push(row('Night Differential', p.nightDiff));
-        if ((p.holidayPay || 0) > 0) rows.push(row('Holiday Pay', p.holidayPay));
+        loansSection.classList.add('d-none');
     }
 
-    if ((p.leavePay || 0) > 0) rows.push(row('Leave Pay', p.leavePay));
+    document.getElementById('modal-total-deductions').textContent = peso(payslip.total_deductions);
 
-    if ((p.additionalShiftPay || 0) > 0 && (p.additionalShiftCount || 0) > 0) {
-        const label = `Additional Shift Pay (${p.additionalShiftCount} shift${p.additionalShiftCount > 1 ? 's' : ''})`;
-        rows.push(row(label, p.additionalShiftPay));
+    // Net pay
+    document.getElementById('modal-net-pay').textContent = peso(payslip.net_pay);
+
+    // Notes
+    const notesWrap = document.getElementById('modal-notes-wrap');
+    if (payslip.notes) {
+        document.getElementById('modal-notes').textContent = payslip.notes;
+        notesWrap.classList.remove('d-none');
+    } else {
+        notesWrap.classList.add('d-none');
     }
 
-    if ((p.allowances || 0) > 0) rows.push(row('Allowances', p.allowances));
+    const modalEl = document.getElementById('breakdownModal');
+    modalEl.style.display = 'block';
+    modalEl.classList.add('show');
+    document.body.classList.add('modal-open');
 
+    let backdrop = document.getElementById('modal-backdrop');
+    if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.id = 'modal-backdrop';
+        backdrop.className = 'modal-backdrop fade show';
+        document.body.appendChild(backdrop);
+    }
+}
+
+function closeModal() {
+    const modalEl = document.getElementById('breakdownModal');
+    modalEl.style.display = 'none';
+    modalEl.classList.remove('show');
+    document.body.classList.remove('modal-open');
+    const backdrop = document.getElementById('modal-backdrop');
+    if (backdrop) backdrop.remove();
+}
+
+function buildEarnings(p) {
+    const rows = [];
+    rows.push(row('Basic Pay',             p.basic_pay));
+    if (p.overtime_pay > 0)         rows.push(row('Overtime Pay',             p.overtime_pay));
+    if (p.night_diff_pay > 0)       rows.push(row('Night Differential',       p.night_diff_pay));
+    if (p.holiday_pay > 0)          rows.push(row('Holiday Pay',              p.holiday_pay));
+    if (p.rest_day_pay > 0)         rows.push(row('Rest Day Pay',             p.rest_day_pay));
+    if (p.leave_pay > 0)            rows.push(row('Leave Pay',                p.leave_pay));
+    if (p.additional_shift_pay > 0) rows.push(row('Additional Shift Pay',     p.additional_shift_pay));
+    if (p.allowances > 0)           rows.push(row('Allowances',               p.allowances));
     return rows.join('');
 }
 
-function buildDeductionRows(p) {
+// ── Mandatory deductions (statutory + attendance) ─────────────────────────────
+function buildMandatoryDeductions(p) {
     const rows = [];
-    if ((p.sss || 0) > 0)        rows.push(row('SSS Contribution', p.sss));
-    if ((p.philHealth || 0) > 0)  rows.push(row('PhilHealth', p.philHealth));
-    if ((p.pagibig || 0) > 0)     rows.push(row('Pag-IBIG', p.pagibig));
-    if ((p.tax || 0) > 0)         rows.push(row('Withholding Tax', p.tax));
-    if ((p.loanDeductions || 0) > 0) rows.push(row('Loan Deductions', p.loanDeductions));
-
-    const tardiness = (p.lateDeductions || 0) + (p.undertimeDeductions || 0) + (p.absentDeductions || 0);
-    if (tardiness > 0) rows.push(row('Tardiness (Late/Undertime/Absent)', tardiness));
-
-    if ((p.otherDeductions || 0) > 0) rows.push(row('Other Deductions', p.otherDeductions));
-
+    if (p.sss > 0)                  rows.push(row('SSS Contribution',    p.sss));
+    if (p.philhealth > 0)           rows.push(row('PhilHealth',          p.philhealth));
+    if (p.pagibig > 0)              rows.push(row('Pag-IBIG',            p.pagibig));
+    if (p.withholding_tax > 0)      rows.push(row('Withholding Tax',     p.withholding_tax));
+    if (p.late_deductions > 0)      rows.push(row('Late',                p.late_deductions));
+    if (p.undertime_deductions > 0) rows.push(row('Undertime',           p.undertime_deductions));
+    if (p.absent_deductions > 0)    rows.push(row('Absent',              p.absent_deductions));
+    if (p.other_deductions > 0)     rows.push(row('Other Deductions',    p.other_deductions));
+    if (p.deferred_balance > 0)     rows.push(row('Deferred Balance (Prior Period)', p.deferred_balance));
     return rows.join('');
+}
+
+function calcMandatoryTotal(p) {
+    return (p.sss || 0) + (p.philhealth || 0) + (p.pagibig || 0) +
+           (p.withholding_tax || 0) + (p.late_deductions || 0) +
+           (p.undertime_deductions || 0) + (p.absent_deductions || 0) +
+           (p.other_deductions || 0) + (p.deferred_balance || 0);
+}
+
+// ── Loan deductions — named per loan from DB ──────────────────────────────────
+function buildLoanDeductions(p) {
+    const rows  = [];
+    let   total = 0;
+
+    if (Array.isArray(p.loan_deductions) && p.loan_deductions.length > 0) {
+        p.loan_deductions.forEach(ld => {
+            if (ld.amount > 0) {
+                rows.push(row(ld.label, ld.amount));
+                total += ld.amount;
+            }
+        });
+    }
+
+    return { html: rows.join(''), total };
 }
 
 function row(label, amount) {
     return `<tr>
-        <td class="text-muted">${label}</td>
-        <td class="text-end">${formatPeso(amount || 0)}</td>
+        <td class="text-muted">${esc(label)}</td>
+        <td class="text-right">${peso(amount)}</td>
     </tr>`;
 }
 
-function restDayLabel(p) {
-    const nd = p.restDayHasNightShift;
-    switch (p.restDayType) {
-        case 'regular_holiday': return nd ? 'Rest Day Pay (RH+RD+ND: 2.86×)' : 'Rest Day Pay (2.60×)';
-        case 'special_holiday': return nd ? 'Rest Day Pay (SH+RD+ND: 1.65×)' : 'Rest Day Pay (1.50×)';
-        default:                return nd ? 'Rest Day Pay (RD+ND: 1.43×)'     : 'Rest Day Pay (1.30×)';
-    }
-}
-
-// ============================================================
-// DOWNLOAD (stub — wire to real PDF util)
-// ============================================================
+// ── Download stub ─────────────────────────────────────────────────────────────
 function downloadPayslip(payslip) {
     if (!payslip) return;
     Swal.fire({
-        icon: 'success',
-        title: 'Payslip Downloaded',
-        text: `Payslip for ${payslip.period} saved as PDF.`,
+        icon: 'info',
+        title: 'Coming Soon',
+        text: `PDF download for ${payslip.period} will be available soon.`,
         confirmButtonColor: '#6c757d',
-        timer: 2000,
-        showConfirmButton: false
     });
 }
 
-// ============================================================
-// HELPERS
-// ============================================================
-function formatPeso(amount) {
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function peso(amount) {
     return '₱' + Number(amount || 0).toLocaleString('en-PH', {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        maximumFractionDigits: 2,
     });
 }
 
 function formatDate(dateStr) {
     if (!dateStr) return '—';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+    const [y, m, d] = dateStr.split('-');
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${months[parseInt(m) - 1]} ${parseInt(d)}, ${y}`;
+}
+
+function periodTypeLabel(type) {
+    return type === '1st-15th' ? '1st–15th' : '16th–End';
+}
+
+function esc(str) {
+    const d = document.createElement('div');
+    d.appendChild(document.createTextNode(str ?? ''));
+    return d.innerHTML;
 }
 </script>
 @endpush

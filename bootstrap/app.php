@@ -33,8 +33,10 @@ return Application::configure(basePath: dirname(__DIR__))
             ->group(base_path('routes/accounting_routes.php'));
         }
     )
-    ->withMiddleware(function (Middleware $middleware): void {
-        //
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->alias([
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

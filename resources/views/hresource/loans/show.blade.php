@@ -11,91 +11,45 @@
 
 @section('content')
 
+@include('components.alerts')
+
 {{-- Page Header --}}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h4 class="mb-0 fw-semibold">Loan Management</h4>
         <small class="text-muted">Manage SSS and PAG-IBIG loan deductions</small>
     </div>
-    <button class="btn btn-primary" onclick="openAddModal()">
-        <i class="bi bi-plus-circle me-1"></i> Add Loan
-    </button>
+    <button class="btn btn-secondary btn-sm" onclick="openAddModal()">Add Loan</button>
 </div>
 
 {{-- Stats Cards --}}
 <div class="row g-3 mb-3">
+    @foreach ([
+        ['id' => 'statActive',   'label' => 'Active Loans'],
+        ['id' => 'statCompleted','label' => 'Completed'],
+        ['id' => 'statSSS',      'label' => 'SSS Loans'],
+        ['id' => 'statPagibig',  'label' => 'PAG-IBIG Loans'],
+        ['id' => 'statBalance',  'label' => 'Total Balance'],
+    ] as $c)
     <div class="col-6 col-md-4 col-lg">
         <div class="card card-body py-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small">Active Loans</div>
-                    <div class="fs-4 fw-bold" id="statActive">0</div>
-                </div>
-                <i class="bi bi-graph-up fs-1 text-secondary opacity-25"></i>
-            </div>
+            <div class="text-muted small mb-1">{{ $c['label'] }}</div>
+            <div class="fs-5 fw-bold" id="{{ $c['id'] }}">—</div>
         </div>
     </div>
-    <div class="col-6 col-md-4 col-lg">
-        <div class="card card-body py-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small">Completed</div>
-                    <div class="fs-4 fw-bold" id="statCompleted">0</div>
-                </div>
-                <i class="bi bi-check-circle fs-1 text-secondary opacity-25"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-4 col-lg">
-        <div class="card card-body py-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small">SSS Loans</div>
-                    <div class="fs-4 fw-bold" id="statSSS">0</div>
-                </div>
-                <i class="bi bi-credit-card fs-1 text-secondary opacity-25"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-4 col-lg">
-        <div class="card card-body py-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small">PAG-IBIG Loans</div>
-                    <div class="fs-4 fw-bold" id="statPagibig">0</div>
-                </div>
-                <i class="bi bi-credit-card-2-front fs-1 text-secondary opacity-25"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-4 col-lg">
-        <div class="card card-body py-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small">Total Balance</div>
-                    <div class="fs-5 fw-bold" id="statBalance">0.00</div>
-                </div>
-                <i class="bi bi-cash-stack fs-1 text-secondary opacity-25"></i>
-            </div>
-        </div>
-    </div>
+    @endforeach
 </div>
 
 {{-- Filters --}}
 <div class="card mb-3">
-    <div class="card-body py-3">
+    <div class="card-body py-2">
         <div class="row g-2 align-items-center">
             <div class="col-md">
-                <div class="input-group">
-                    <span class="input-group-text bg-transparent border-end-0">
-                        <i class="bi bi-search text-muted"></i>
-                    </span>
-                    <input type="text" id="searchInput" class="form-control border-start-0"
-                           placeholder="Search by name, loan ID, or type..." oninput="renderTable()">
-                </div>
+                <input type="text" id="searchInput" class="form-control form-control-sm"
+                    placeholder="Search by name or loan ID…" oninput="debounceLoad()">
             </div>
             <div class="col-md-auto">
-                <select id="typeFilter" class="form-select" onchange="renderTable()">
+                <select id="typeFilter" class="form-select form-select-sm" onchange="loadList()">
                     <option value="all">All Types</option>
                     <option value="sss">SSS Loan</option>
                     <option value="pagibig">PAG-IBIG Loan</option>
@@ -107,28 +61,31 @@
 
 {{-- Table Card --}}
 <div class="card">
-    <div class="card-header pb-0 border-bottom-0">
-        <ul class="nav nav-tabs card-header-tabs" id="loanTabs">
+    <div class="card-header p-0 border-bottom-0">
+        <ul class="nav nav-tabs border-0 px-3 pt-2" id="loanTabs">
             <li class="nav-item">
-                <a class="nav-link active" href="#" onclick="setTab('active', this); return false;">
-                    Active <span class="badge bg-secondary ms-1" id="tabActiveCount">0</span>
+                <a class="nav-link active" href="#" data-status="active"
+                    onclick="setTab(this); return false;">
+                    Active <span class="badge bg-secondary ms-1" id="tabActive">—</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#" onclick="setTab('completed', this); return false;">
-                    Completed <span class="badge bg-secondary ms-1" id="tabCompletedCount">0</span>
+                <a class="nav-link" href="#" data-status="completed"
+                    onclick="setTab(this); return false;">
+                    Completed <span class="badge bg-secondary ms-1" id="tabCompleted">—</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#" onclick="setTab('all', this); return false;">
-                    All <span class="badge bg-secondary ms-1" id="tabAllCount">0</span>
+                <a class="nav-link" href="#" data-status="all"
+                    onclick="setTab(this); return false;">
+                    All <span class="badge bg-secondary ms-1" id="tabAll">—</span>
                 </a>
             </li>
         </ul>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover table-sm align-middle mb-0">
                 <thead class="table-light">
                     <tr>
                         <th class="ps-3">Loan ID</th>
@@ -136,7 +93,7 @@
                         <th>Type</th>
                         <th class="text-end">Loan Amount</th>
                         <th class="text-end">Monthly</th>
-                        <th style="min-width:150px">Progress</th>
+                        <th style="min-width:140px">Progress</th>
                         <th class="text-end">Balance</th>
                         <th class="text-center">Status</th>
                         <th class="text-center pe-3">Actions</th>
@@ -145,8 +102,7 @@
                 <tbody id="loanTableBody">
                     <tr>
                         <td colspan="9" class="text-center text-muted py-5">
-                            <i class="bi bi-credit-card fs-1 d-block mb-2 opacity-25"></i>
-                            Loading...
+                            <span class="spinner-border spinner-border-sm me-2"></span>Loading…
                         </td>
                     </tr>
                 </tbody>
@@ -155,70 +111,76 @@
     </div>
 </div>
 
-{{-- ADD MODAL --}}
-<div class="modal fade" id="addModal" tabindex="-1">
+{{-- ===== MODAL: ADD ===== --}}
+<div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Add New Loan</h5>
+                <h5 class="modal-title" id="addModalLabel">Add New Loan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
+
+                {{-- Employee Search --}}
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">Employee <span class="text-danger">*</span></label>
+                    <label class="form-label fw-medium">Employee <span class="text-danger">*</span></label>
                     <div class="position-relative">
-                        <input type="text" id="addEmpSearch" class="form-control"
-                               placeholder="Search by name, ID, or department..." autocomplete="off"
-                               oninput="filterEmployeeDropdown('add')">
+                        <input type="text" id="addEmpSearch" class="form-control form-control-sm"
+                            placeholder="Search by name, ID, or department…"
+                            autocomplete="off" oninput="searchEmployees()">
                         <div id="addEmpDropdown"
-                             class="list-group position-absolute w-100 shadow z-3 d-none"
-                             style="max-height:200px;overflow-y:auto;top:100%;"></div>
+                            class="list-group position-absolute w-100 shadow z-3 d-none"
+                            style="max-height:200px;overflow-y:auto;top:100%;"></div>
                     </div>
                     <input type="hidden" id="addEmpId">
                     <div id="addEmpSelected" class="mt-2 d-none">
-                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 py-2 px-3">
-                            <i class="bi bi-check-circle me-1"></i>
-                            <span id="addEmpSelectedName"></span>
-                        </span>
+                        <span class="badge bg-secondary py-2 px-3" id="addEmpSelectedName"></span>
                     </div>
                 </div>
+
+                {{-- Loan Type --}}
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">Loan Type <span class="text-danger">*</span></label>
-                    <select id="addLoanType" class="form-select">
+                    <label class="form-label fw-medium">Loan Type <span class="text-danger">*</span></label>
+                    <select id="addLoanType" class="form-select form-select-sm">
                         <option value="">Select loan type</option>
                         <option value="sss">SSS Loan</option>
                         <option value="pagibig">PAG-IBIG Loan</option>
                     </select>
                 </div>
+
+                {{-- Amount + Amortization --}}
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Total Loan Amount <span class="text-danger">*</span></label>
-                        <div class="input-group">
+                        <label class="form-label fw-medium">Total Loan Amount <span class="text-danger">*</span></label>
+                        <div class="input-group input-group-sm">
                             <span class="input-group-text">&#8369;</span>
                             <input type="number" id="addAmount" class="form-control"
-                                   placeholder="24000" min="0" step="100" oninput="autoCalcAmortization()">
+                                placeholder="24000" min="1" step="100"
+                                oninput="autoCalcAmortization()">
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">
+                        <label class="form-label fw-medium">
                             Monthly Amortization <span class="text-danger">*</span>
                             <small class="text-muted fw-normal">(auto-calculated)</small>
                         </label>
-                        <div class="input-group">
+                        <div class="input-group input-group-sm">
                             <span class="input-group-text">&#8369;</span>
-                            <input type="number" id="addAmortization" class="form-control bg-light"
-                                   placeholder="1000.00" min="0" step="0.01">
+                            <input type="number" id="addAmortization" class="form-control"
+                                placeholder="1000.00" min="1" step="0.01">
                         </div>
                     </div>
                 </div>
+
+                {{-- Start Date + Term --}}
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Start Date <span class="text-danger">*</span></label>
-                        <input type="date" id="addStartDate" class="form-control">
+                        <label class="form-label fw-medium">Start Date <span class="text-danger">*</span></label>
+                        <input type="date" id="addStartDate" class="form-control form-control-sm">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Number of Payments <span class="text-danger">*</span></label>
-                        <select id="addTerm" class="form-select" onchange="autoCalcAmortization()">
+                        <label class="form-label fw-medium">Number of Payments <span class="text-danger">*</span></label>
+                        <select id="addTerm" class="form-select form-select-sm" onchange="autoCalcAmortization()">
                             <option value="12">12 months (1 year)</option>
                             <option value="18">18 months (1.5 years)</option>
                             <option value="24" selected>24 months (2 years)</option>
@@ -227,79 +189,91 @@
                         </select>
                     </div>
                 </div>
-                <div id="addSummary" class="alert alert-secondary d-none">
-                    <strong><i class="bi bi-info-circle me-1"></i> Loan Summary Preview</strong>
-                    <div class="row mt-2 g-2 small">
-                        <div class="col-6">
-                            <span class="text-muted">Total Amount:</span>
-                            <span id="sumAmount" class="fw-semibold ms-1"></span>
+
+                {{-- Notes --}}
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Notes</label>
+                    <textarea id="addNotes" class="form-control form-control-sm" rows="2"
+                        placeholder="Optional notes…"></textarea>
+                </div>
+
+                {{-- Summary Preview --}}
+                <div id="addSummary" class="border rounded p-2 bg-light d-none small">
+                    <strong>Loan Summary</strong>
+                    <div class="row mt-1 g-1">
+                        <div class="col-6 col-md-3">
+                            <span class="text-muted">Total:</span>
+                            <span id="sumAmount" class="fw-medium ms-1"></span>
                         </div>
-                        <div class="col-6">
-                            <span class="text-muted">Monthly Payment:</span>
-                            <span id="sumMonthly" class="fw-semibold ms-1"></span>
+                        <div class="col-6 col-md-3">
+                            <span class="text-muted">Monthly:</span>
+                            <span id="sumMonthly" class="fw-medium ms-1"></span>
                         </div>
-                        <div class="col-6">
+                        <div class="col-6 col-md-3">
                             <span class="text-muted">Term:</span>
-                            <span id="sumTerm" class="fw-semibold ms-1"></span>
+                            <span id="sumTerm" class="fw-medium ms-1"></span>
                         </div>
-                        <div class="col-6">
-                            <span class="text-muted">Total to Pay:</span>
-                            <span id="sumTotal" class="fw-semibold ms-1"></span>
+                        <div class="col-6 col-md-3">
+                            <span class="text-muted">Total Pay:</span>
+                            <span id="sumTotal" class="fw-medium ms-1"></span>
                         </div>
                     </div>
                 </div>
+
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-primary" onclick="submitAddLoan()">
-                    <i class="bi bi-plus-circle me-1"></i> Add Loan
-                </button>
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-secondary btn-sm" id="addSubmitBtn"
+                    onclick="submitAddLoan()">Add Loan</button>
             </div>
         </div>
     </div>
 </div>
 
-{{-- EDIT MODAL --}}
-<div class="modal fade" id="editModal" tabindex="-1">
+{{-- ===== MODAL: EDIT ===== --}}
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Edit Loan</h5>
+                <h5 class="modal-title" id="editModalLabel">Edit Loan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editLoanId">
-                <div class="alert alert-secondary py-2 small mb-3">
+
+                <div class="border rounded p-2 bg-light small mb-3">
                     <strong id="editEmpName"></strong> &mdash;
                     <span id="editLoanTypeName" class="text-muted"></span>
-                    &nbsp;|&nbsp; Payments made: <span id="editPaymentsMade" class="fw-semibold"></span>
+                    &nbsp;|&nbsp; Payments made:
+                    <span id="editPaymentsMade" class="fw-medium"></span>
                 </div>
+
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Total Loan Amount <span class="text-danger">*</span></label>
-                        <div class="input-group">
+                        <label class="form-label fw-medium">Total Loan Amount <span class="text-danger">*</span></label>
+                        <div class="input-group input-group-sm">
                             <span class="input-group-text">&#8369;</span>
                             <input type="number" id="editAmount" class="form-control"
-                                   min="0" step="100" oninput="updateEditSummary()">
+                                min="1" step="100" oninput="updateEditSummary()">
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Monthly Amortization <span class="text-danger">*</span></label>
-                        <div class="input-group">
+                        <label class="form-label fw-medium">Monthly Amortization <span class="text-danger">*</span></label>
+                        <div class="input-group input-group-sm">
                             <span class="input-group-text">&#8369;</span>
                             <input type="number" id="editAmortization" class="form-control"
-                                   min="0" step="50" oninput="updateEditSummary()">
+                                min="1" step="0.01" oninput="updateEditSummary()">
                         </div>
                     </div>
                 </div>
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Start Date <span class="text-danger">*</span></label>
-                        <input type="date" id="editStartDate" class="form-control">
+                        <label class="form-label fw-medium">Start Date <span class="text-danger">*</span></label>
+                        <input type="date" id="editStartDate" class="form-control form-control-sm">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Number of Payments <span class="text-danger">*</span></label>
-                        <select id="editTerm" class="form-select">
+                        <label class="form-label fw-medium">Number of Payments <span class="text-danger">*</span></label>
+                        <select id="editTerm" class="form-select form-select-sm">
                             <option value="12">12 months</option>
                             <option value="18">18 months</option>
                             <option value="24">24 months</option>
@@ -308,56 +282,63 @@
                         </select>
                     </div>
                 </div>
-                <div id="editSummary" class="alert alert-secondary d-none">
-                    <strong><i class="bi bi-calculator me-1"></i> Updated Balance Calculation</strong>
-                    <div class="row mt-2 g-2 small">
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Notes</label>
+                    <textarea id="editNotes" class="form-control form-control-sm" rows="2"></textarea>
+                </div>
+
+                <div id="editSummary" class="border rounded p-2 bg-light d-none small">
+                    <strong>Recalculated Balance</strong>
+                    <div class="row mt-1 g-1">
                         <div class="col-4">
                             <span class="text-muted">Payments Made:</span>
-                            <span id="editSumPaid" class="fw-semibold ms-1"></span>
+                            <span id="editSumPaid" class="fw-medium ms-1"></span>
                         </div>
                         <div class="col-4">
                             <span class="text-muted">Total Paid:</span>
-                            <span id="editSumTotalPaid" class="fw-semibold ms-1"></span>
+                            <span id="editSumTotalPaid" class="fw-medium ms-1"></span>
                         </div>
                         <div class="col-4">
                             <span class="text-muted">New Balance:</span>
-                            <span id="editSumBalance" class="fw-semibold ms-1"></span>
+                            <span id="editSumBalance" class="fw-medium ms-1"></span>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-primary" onclick="submitEditLoan()">
-                    <i class="bi bi-pencil me-1"></i> Update Loan
-                </button>
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-secondary btn-sm" onclick="submitEditLoan()">Update Loan</button>
             </div>
         </div>
     </div>
 </div>
 
-{{-- VIEW MODAL --}}
-<div class="modal fade" id="viewModal" tabindex="-1">
+{{-- ===== MODAL: VIEW ===== --}}
+<div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Loan Details</h5>
+                <h5 class="modal-title" id="viewModalLabel">Loan Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="viewModalBody"></div>
+            <div class="modal-body" id="viewModalBody">
+                <div class="text-center py-4">
+                    <span class="spinner-border spinner-border-sm"></span>
+                </div>
+            </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
 
-{{-- DELETE MODAL --}}
-<div class="modal fade" id="deleteModal" tabindex="-1">
+{{-- ===== MODAL: DELETE ===== --}}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-sm">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Delete Loan</h5>
+                <h5 class="modal-title" id="deleteModalLabel">Delete Loan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -365,8 +346,9 @@
                 <div class="border rounded p-2 small" id="deleteInfo"></div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-primary" onclick="confirmDelete()">Delete</button>
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-outline-secondary btn-sm" id="confirmDeleteBtn"
+                    onclick="confirmDelete()">Delete</button>
             </div>
         </div>
     </div>
@@ -375,451 +357,507 @@
 @endsection
 
 @push('scripts')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <script>
-/* ================================================
-   SAMPLE DATA — replace with Blade/API data later
-   ================================================ */
-const EMPLOYEES = [
-    { id: 'EMP001', fullName: 'Maria Santos',    department: 'Operations', role: 'employee'   },
-    { id: 'EMP002', fullName: 'Juan dela Cruz',  department: 'HR',         role: 'hr'         },
-    { id: 'EMP003', fullName: 'Ana Reyes',       department: 'Finance',    role: 'accounting' },
-    { id: 'EMP004', fullName: 'Mark Villanueva', department: 'IT',         role: 'employee'   },
-    { id: 'EMP005', fullName: 'Liza Mendoza',    department: 'Operations', role: 'employee'   },
-    { id: 'EMP006', fullName: 'Carlo Bautista',  department: 'Management', role: 'admin'      },
-    { id: 'EMP007', fullName: 'Rose Aquino',     department: 'Sales',      role: 'employee'   },
-    { id: 'EMP008', fullName: 'Jose Ramos',      department: 'Finance',    role: 'employee'   },
-];
+(function () {
+    'use strict';
 
-let loans = [
-    {
-        id: 'LN-2024-001', employeeId: 'EMP001', employeeName: 'Maria Santos',
-        loanTypeId: 'sss', loanTypeName: 'SSS Loan',
-        amount: 24000, monthlyAmortization: 1000, term: 24,
-        startDate: '2024-01-15', paymentsMade: 14, remainingBalance: 10000,
-        status: 'active', createdDate: '2024-01-10', createdBy: 'Admin'
-    },
-    {
-        id: 'LN-2024-002', employeeId: 'EMP002', employeeName: 'Juan dela Cruz',
-        loanTypeId: 'pagibig', loanTypeName: 'PAG-IBIG Loan',
-        amount: 60000, monthlyAmortization: 1250, term: 48,
-        startDate: '2023-06-01', paymentsMade: 20, remainingBalance: 35000,
-        status: 'active', createdDate: '2023-05-28', createdBy: 'Admin'
-    },
-    {
-        id: 'LN-2023-005', employeeId: 'EMP003', employeeName: 'Ana Reyes',
-        loanTypeId: 'sss', loanTypeName: 'SSS Loan',
-        amount: 18000, monthlyAmortization: 1500, term: 12,
-        startDate: '2023-01-01', paymentsMade: 12, remainingBalance: 0,
-        status: 'completed', createdDate: '2022-12-20', createdBy: 'Admin',
-        completedDate: '2023-12-15'
-    },
-    {
-        id: 'LN-2024-003', employeeId: 'EMP004', employeeName: 'Mark Villanueva',
-        loanTypeId: 'pagibig', loanTypeName: 'PAG-IBIG Loan',
-        amount: 30000, monthlyAmortization: 833.33, term: 36,
-        startDate: '2024-03-01', paymentsMade: 8, remainingBalance: 23333.36,
-        status: 'active', createdDate: '2024-02-25', createdBy: 'Admin'
-    },
-    {
-        id: 'LN-2024-004', employeeId: 'EMP005', employeeName: 'Liza Mendoza',
-        loanTypeId: 'sss', loanTypeName: 'SSS Loan',
-        amount: 12000, monthlyAmortization: 500, term: 24,
-        startDate: '2024-02-01', paymentsMade: 24, remainingBalance: 0,
-        status: 'completed', createdDate: '2024-01-28', createdBy: 'Admin',
-        completedDate: '2026-01-31'
-    },
-    {
-        id: 'LN-2025-001', employeeId: 'EMP007', employeeName: 'Rose Aquino',
-        loanTypeId: 'sss', loanTypeName: 'SSS Loan',
-        amount: 20000, monthlyAmortization: 833.33, term: 24,
-        startDate: '2025-01-01', paymentsMade: 2, remainingBalance: 18333.34,
-        status: 'active', createdDate: '2024-12-20', createdBy: 'Admin'
-    },
-];
+    // ─── CONFIG ──────────────────────────────────────────────────────────────
+    const CSRF = '{{ csrf_token() }}';
+    const BASE = '{{ url("/hresource/loans") }}';
 
-/* ================================================
-   STATE
-   ================================================ */
-var currentTab   = 'active';
-var deleteLoanId = null;
+    // ─── STATE ───────────────────────────────────────────────────────────────
+    let currentStatus  = 'active';
+    let deleteLoanId   = null;
+    let editPayments   = 0;
+    let empSearchTimer = null;
 
-/* ================================================
-   HELPERS
-   ================================================ */
-function peso(n) {
-    return '\u20b1' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+    // ─── INIT ────────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        loadStats();
+        loadList();
 
-function generateLoanId() {
-    var year = new Date().getFullYear();
-    var seq  = String(loans.length + 1).padStart(3, '0');
-    return 'LN-' + year + '-' + seq;
-}
-
-function loanTypeBadge(id, name) {
-    return '<span class="badge ' + (id === 'sss' ? 'bg-primary' : 'bg-secondary') + ' bg-opacity-75">' + name + '</span>';
-}
-
-function statusBadge(status) {
-    return status === 'active'
-        ? '<span class="badge bg-primary bg-opacity-10 border border-primary border-opacity-25 text-primary">Active</span>'
-        : '<span class="badge bg-secondary bg-opacity-10 border text-secondary">Completed</span>';
-}
-
-function progressBar(paymentsMade, term, loanTypeId) {
-    var pct = term > 0 ? Math.min(100, Math.round((paymentsMade / term) * 100)) : 0;
-    var cls = loanTypeId === 'sss' ? 'bg-primary' : 'bg-secondary';
-    return '<div class="d-flex flex-column align-items-center gap-1">' +
-        '<span class="small fw-semibold">' + paymentsMade + '/' + term + '</span>' +
-        '<div class="progress w-100" style="height:6px"><div class="progress-bar ' + cls + '" style="width:' + pct + '%"></div></div>' +
-        '<span class="text-muted" style="font-size:.72rem">' + pct + '%</span>' +
-        '</div>';
-}
-
-/* ================================================
-   STATS
-   ================================================ */
-function updateStats() {
-    var active    = loans.filter(function(l) { return l.status === 'active'; });
-    var completed = loans.filter(function(l) { return l.status === 'completed'; });
-
-    document.getElementById('statActive').textContent    = active.length;
-    document.getElementById('statCompleted').textContent = completed.length;
-    document.getElementById('statSSS').textContent       = active.filter(function(l) { return l.loanTypeId === 'sss'; }).length;
-    document.getElementById('statPagibig').textContent   = active.filter(function(l) { return l.loanTypeId === 'pagibig'; }).length;
-    document.getElementById('statBalance').textContent   =
-        peso(active.reduce(function(s, l) { return s + (l.remainingBalance || 0); }, 0));
-
-    document.getElementById('tabActiveCount').textContent    = active.length;
-    document.getElementById('tabCompletedCount').textContent = completed.length;
-    document.getElementById('tabAllCount').textContent       = loans.length;
-}
-
-/* ================================================
-   TABLE RENDER
-   ================================================ */
-function renderTable() {
-    var search = document.getElementById('searchInput').value.toLowerCase();
-    var type   = document.getElementById('typeFilter').value;
-    var tbody  = document.getElementById('loanTableBody');
-
-    var data = loans.filter(function(l) {
-        if (currentTab === 'active'    && l.status !== 'active')    return false;
-        if (currentTab === 'completed' && l.status !== 'completed') return false;
-        if (type !== 'all' && l.loanTypeId !== type)                return false;
-        if (search && !(
-            l.id.toLowerCase().indexOf(search) >= 0            ||
-            l.employeeName.toLowerCase().indexOf(search) >= 0  ||
-            l.loanTypeName.toLowerCase().indexOf(search) >= 0
-        )) return false;
-        return true;
+        // Close employee dropdown on outside click
+        document.addEventListener('click', function (e) {
+            const dd = document.getElementById('addEmpDropdown');
+            if (dd && !dd.contains(e.target) && e.target.id !== 'addEmpSearch') {
+                dd.classList.add('d-none');
+            }
+        });
     });
 
-    if (!data.length) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-5">' +
-            '<i class="bi bi-credit-card fs-1 d-block mb-2 opacity-25"></i>No loans found</td></tr>';
-        return;
+    // ─── STATS ───────────────────────────────────────────────────────────────
+    function loadStats() {
+        fetch(BASE + '/stats')
+            .then(r => r.json())
+            .then(function (d) {
+                setText('statActive',    d.active);
+                setText('statCompleted', d.completed);
+                setText('statSSS',       d.sss);
+                setText('statPagibig',   d.pagibig);
+                setText('statBalance',   '\u20b1' + d.total_balance);
+            })
+            .catch(console.error);
     }
 
-    tbody.innerHTML = data.map(function(l) {
-        var actions = '<button class="btn btn-sm btn-link p-1 text-secondary" title="View" onclick="openViewModal(\'' + l.id + '\')">' +
-            '<i class="bi bi-eye"></i></button>';
-        if (l.status === 'active') {
-            actions += '<button class="btn btn-sm btn-link p-1 text-secondary" title="Edit" onclick="openEditModal(\'' + l.id + '\')">' +
-                '<i class="bi bi-pencil"></i></button>';
-            actions += '<button class="btn btn-sm btn-link p-1 text-secondary" title="Delete" onclick="openDeleteModal(\'' + l.id + '\')">' +
-                '<i class="bi bi-trash"></i></button>';
+    // ─── LIST ─────────────────────────────────────────────────────────────────
+    window.loadList = function () {
+        const tbody  = document.getElementById('loanTableBody');
+        const search = document.getElementById('searchInput').value;
+        const type   = document.getElementById('typeFilter').value;
+
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">' +
+            '<span class="spinner-border spinner-border-sm me-2"></span>Loading\u2026</td></tr>';
+
+        const url = BASE + '/list?status=' + currentStatus +
+            '&type=' + type +
+            '&search=' + encodeURIComponent(search);
+
+        fetch(url)
+            .then(r => r.json())
+            .then(function (data) {
+                // Update tab counts only on full load
+                updateTabCounts(data);
+                renderTable(data);
+            })
+            .catch(function () {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">Failed to load data.</td></tr>';
+            });
+    };
+
+    function renderTable(data) {
+        const tbody = document.getElementById('loanTableBody');
+
+        if (!data.length) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-5">No loans found.</td></tr>';
+            return;
         }
-        return '<tr>' +
-            '<td class="ps-3"><code class="text-primary small">' + l.id + '</code></td>' +
-            '<td><div class="fw-semibold">' + l.employeeName + '</div>' +
-                '<div class="text-muted" style="font-size:.78rem">' + l.employeeId + '</div></td>' +
-            '<td>' + loanTypeBadge(l.loanTypeId, l.loanTypeName) + '</td>' +
-            '<td class="text-end fw-semibold">' + peso(l.amount) + '</td>' +
-            '<td class="text-end text-muted">' + peso(l.monthlyAmortization) + '</td>' +
-            '<td>' + progressBar(l.paymentsMade, l.term, l.loanTypeId) + '</td>' +
-            '<td class="text-end fw-bold' + (l.remainingBalance > 0 ? '' : ' text-muted') + '">' + peso(l.remainingBalance) + '</td>' +
-            '<td class="text-center">' + statusBadge(l.status) + '</td>' +
-            '<td class="text-center pe-3">' + actions + '</td>' +
-            '</tr>';
-    }).join('');
-}
 
-/* ================================================
-   TABS
-   ================================================ */
-function setTab(tab, el) {
-    currentTab = tab;
-    document.querySelectorAll('#loanTabs .nav-link').forEach(function(a) { a.classList.remove('active'); });
-    el.classList.add('active');
-    renderTable();
-}
+        tbody.innerHTML = data.map(function (l) {
+            const typeBadge = '<span class="badge ' +
+                (l.loan_type === 'sss' ? 'bg-primary' : 'bg-secondary') + '">' +
+                x(l.loan_type_name) + '</span>';
 
-/* ================================================
-   EMPLOYEE DROPDOWN
-   ================================================ */
-function filterEmployeeDropdown(prefix) {
-    var input    = document.getElementById(prefix + 'EmpSearch');
-    var dropdown = document.getElementById(prefix + 'EmpDropdown');
-    var val      = input.value.trim().toLowerCase();
+            const statusBadge = l.status === 'active'
+                ? '<span class="badge bg-secondary">Active</span>'
+                : '<span class="badge bg-primary">Completed</span>';
 
-    document.getElementById(prefix + 'EmpId').value = '';
-    document.getElementById(prefix + 'EmpSelected').classList.add('d-none');
+            const barClass = l.loan_type === 'sss' ? 'bg-primary' : 'bg-secondary';
+            const progress =
+                '<div class="small text-center">' + l.payments_made + '/' + l.term_months + '</div>' +
+                '<div class="progress" style="height:5px">' +
+                    '<div class="progress-bar ' + barClass + '" style="width:' + l.progress_percent + '%"></div>' +
+                '</div>';
 
-    if (!val) { dropdown.classList.add('d-none'); return; }
+            const balance = parseFloat(l.remaining_balance.replace(/,/g, ''));
+            const balanceCell = '<span class="fw-bold' + (balance <= 0 ? ' text-muted' : '') + '">' +
+                '\u20b1' + x(l.remaining_balance) + '</span>';
 
-    var results = EMPLOYEES.filter(function(e) {
-        return e.fullName.toLowerCase().indexOf(val) >= 0   ||
-               e.id.toLowerCase().indexOf(val) >= 0          ||
-               e.department.toLowerCase().indexOf(val) >= 0;
-    });
+            let actions = '<button class="btn btn-sm btn-link p-1 text-secondary" title="View" ' +
+                'onclick="openViewModal(' + l.id + ')"><i class="bi bi-eye"></i></button>';
 
-    dropdown.innerHTML = results.length
-        ? results.map(function(e) {
-            return '<button type="button" class="list-group-item list-group-item-action py-2 small"' +
-                ' onclick="selectEmployee(\'' + prefix + '\',\'' + e.id + '\',\'' + e.fullName + '\')">' +
-                '<strong>' + e.fullName + '</strong> ' +
-                '<span class="text-muted">(' + e.id + ')</span> ' +
-                '<span class="badge bg-secondary bg-opacity-25 text-secondary">' + e.department + '</span>' +
-                '</button>';
-          }).join('')
-        : '<div class="list-group-item text-muted small py-2">No results for "' + input.value + '"</div>';
+            if (l.status === 'active') {
+                actions += '<button class="btn btn-sm btn-link p-1 text-secondary" title="Edit" ' +
+                    'onclick="openEditModal(' + l.id + ')"><i class="bi bi-pencil"></i></button>' +
+                    '<button class="btn btn-sm btn-link p-1 text-secondary" title="Delete" ' +
+                    'onclick="openDeleteModal(' + l.id + ', \'' + x(l.employee) + '\', \'' + x(l.loan_type_name) + '\', \'' + x(l.remaining_balance) + '\')"><i class="bi bi-trash"></i></button>';
+            }
 
-    dropdown.classList.remove('d-none');
-}
-
-function selectEmployee(prefix, id, name) {
-    document.getElementById(prefix + 'EmpSearch').value  = name;
-    document.getElementById(prefix + 'EmpId').value      = id;
-    document.getElementById(prefix + 'EmpDropdown').classList.add('d-none');
-    document.getElementById(prefix + 'EmpSelectedName').textContent = name + ' (' + id + ')';
-    document.getElementById(prefix + 'EmpSelected').classList.remove('d-none');
-}
-
-document.addEventListener('click', function(e) {
-    var dd = document.getElementById('addEmpDropdown');
-    if (dd && !dd.contains(e.target) && e.target.id !== 'addEmpSearch') {
-        dd.classList.add('d-none');
+            return '<tr>' +
+                '<td class="ps-3"><code class="small">' + x(l.id) + '</code></td>' +
+                '<td><div class="fw-medium">' + x(l.employee) + '</div>' +
+                    '<small class="text-muted">' + x(l.employee_id) + '</small></td>' +
+                '<td>' + typeBadge + '</td>' +
+                '<td class="text-end">\u20b1' + x(l.amount) + '</td>' +
+                '<td class="text-end text-muted small">\u20b1' + x(l.monthly_amortization) + '</td>' +
+                '<td>' + progress + '</td>' +
+                '<td class="text-end">' + balanceCell + '</td>' +
+                '<td class="text-center">' + statusBadge + '</td>' +
+                '<td class="text-center pe-3">' + actions + '</td>' +
+                '</tr>';
+        }).join('');
     }
-});
 
-/* ================================================
-   AUTO AMORTIZATION
-   ================================================ */
-function autoCalcAmortization() {
-    var amount = parseFloat(document.getElementById('addAmount').value) || 0;
-    var term   = parseInt(document.getElementById('addTerm').value)     || 0;
-    var sumEl  = document.getElementById('addSummary');
+    function updateTabCounts(data) {
+        // Counts per status within the current type/search filter
+        const active    = data.filter(l => l.status === 'active').length;
+        const completed = data.filter(l => l.status === 'completed').length;
+        setText('tabActive',    active);
+        setText('tabCompleted', completed);
+        setText('tabAll',       data.length);
+    }
 
-    if (amount > 0 && term > 0) {
-        var monthly = (amount / term).toFixed(2);
-        document.getElementById('addAmortization').value = monthly;
-        document.getElementById('sumAmount').textContent  = peso(amount);
-        document.getElementById('sumMonthly').textContent = peso(monthly);
-        document.getElementById('sumTerm').textContent    = term + ' months';
-        document.getElementById('sumTotal').textContent   = peso(monthly * term);
+    // ─── TABS ─────────────────────────────────────────────────────────────────
+    window.setTab = function (el) {
+        document.querySelectorAll('#loanTabs .nav-link').forEach(a => a.classList.remove('active'));
+        el.classList.add('active');
+        currentStatus = el.getAttribute('data-status');
+        loadList();
+    };
+
+    // ─── DEBOUNCE SEARCH ─────────────────────────────────────────────────────
+    window.debounceLoad = function () {
+        clearTimeout(empSearchTimer);
+        empSearchTimer = setTimeout(loadList, 350);
+    };
+
+    // ─── EMPLOYEE SEARCH (add modal) ─────────────────────────────────────────
+    window.searchEmployees = function () {
+        const input    = document.getElementById('addEmpSearch');
+        const dropdown = document.getElementById('addEmpDropdown');
+        const val      = input.value.trim();
+
+        document.getElementById('addEmpId').value = '';
+        document.getElementById('addEmpSelected').classList.add('d-none');
+
+        if (!val) { dropdown.classList.add('d-none'); return; }
+
+        fetch(BASE + '/employees?q=' + encodeURIComponent(val))
+            .then(r => r.json())
+            .then(function (results) {
+                if (!results.length) {
+                    dropdown.innerHTML = '<div class="list-group-item text-muted small py-2">No results found.</div>';
+                } else {
+                    dropdown.innerHTML = results.map(function (e) {
+                        return '<button type="button" class="list-group-item list-group-item-action py-2 small" ' +
+                            'onclick="selectEmployee(\'' + x(e.id) + '\', \'' + x(e.full_name) + '\')">' +
+                            '<strong>' + x(e.full_name) + '</strong> ' +
+                            '<span class="text-muted">(' + x(e.id) + ')</span> ' +
+                            '<span class="badge bg-secondary">' + x(e.department) + '</span>' +
+                            '</button>';
+                    }).join('');
+                }
+                dropdown.classList.remove('d-none');
+            })
+            .catch(console.error);
+    };
+
+    window.selectEmployee = function (id, name) {
+        document.getElementById('addEmpSearch').value         = name;
+        document.getElementById('addEmpId').value             = id;
+        document.getElementById('addEmpDropdown').classList.add('d-none');
+        document.getElementById('addEmpSelectedName').textContent = name + ' (' + id + ')';
+        document.getElementById('addEmpSelected').classList.remove('d-none');
+    };
+
+    // ─── AUTO AMORTIZATION ───────────────────────────────────────────────────
+    window.autoCalcAmortization = function () {
+        const amount = parseFloat(document.getElementById('addAmount').value) || 0;
+        const term   = parseInt(document.getElementById('addTerm').value)     || 0;
+        const sumEl  = document.getElementById('addSummary');
+
+        if (amount > 0 && term > 0) {
+            const monthly = (amount / term).toFixed(2);
+            document.getElementById('addAmortization').value = monthly;
+            setText('sumAmount',  '\u20b1' + fmt(amount));
+            setText('sumMonthly', '\u20b1' + fmt(monthly));
+            setText('sumTerm',    term + ' months');
+            setText('sumTotal',   '\u20b1' + fmt((monthly * term).toFixed(2)));
+            sumEl.classList.remove('d-none');
+        } else {
+            sumEl.classList.add('d-none');
+        }
+    };
+
+    // ─── ADD LOAN ─────────────────────────────────────────────────────────────
+    window.openAddModal = function () {
+        ['addEmpSearch', 'addAmount', 'addAmortization', 'addStartDate', 'addEmpId', 'addNotes']
+            .forEach(id => { document.getElementById(id).value = ''; });
+        document.getElementById('addLoanType').value = '';
+        document.getElementById('addTerm').value     = '24';
+        document.getElementById('addEmpDropdown').classList.add('d-none');
+        document.getElementById('addEmpSelected').classList.add('d-none');
+        document.getElementById('addSummary').classList.add('d-none');
+        new bootstrap.Modal(document.getElementById('addModal')).show();
+    };
+
+    window.submitAddLoan = function () {
+        const empId = document.getElementById('addEmpId').value;
+        const type  = document.getElementById('addLoanType').value;
+        const amt   = document.getElementById('addAmount').value;
+        const amor  = document.getElementById('addAmortization').value;
+        const date  = document.getElementById('addStartDate').value;
+        const term  = document.getElementById('addTerm').value;
+        const notes = document.getElementById('addNotes').value;
+
+        if (!empId || !type || !amt || !amor || !date || !term) {
+            Swal.fire({ icon: 'warning', title: 'Incomplete', text: 'Please fill in all required fields.' });
+            return;
+        }
+
+        const btn = document.getElementById('addSubmitBtn');
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+
+        fetch(BASE, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
+            body: JSON.stringify({
+                user_id:               empId,
+                loan_type:             type,
+                amount:                amt,
+                monthly_amortization:  amor,
+                term_months:           term,
+                start_date:            date,
+                notes:                 notes,
+            }),
+        })
+        .then(handleJsonResponse)
+        .then(function (res) {
+            bootstrap.Modal.getInstance(document.getElementById('addModal')).hide();
+            toast(res.message);
+            loadStats();
+            loadList();
+        })
+        .catch(handleError)
+        .finally(function () {
+            btn.disabled    = false;
+            btn.textContent = 'Add Loan';
+        });
+    };
+
+    // ─── EDIT LOAN ────────────────────────────────────────────────────────────
+    window.openEditModal = function (id) {
+        fetch(BASE + '/' + id, { headers: { 'Accept': 'application/json' } })
+            .then(r => r.json())
+            .then(function (l) {
+                editPayments = l.payments_made;
+                document.getElementById('editLoanId').value             = l.id;
+                document.getElementById('editEmpName').textContent      = l.employee;
+                document.getElementById('editLoanTypeName').textContent = l.loan_type_name;
+                document.getElementById('editPaymentsMade').textContent = l.payments_made + '/' + l.term_months;
+
+                // Parse raw numbers from formatted strings for inputs
+                document.getElementById('editAmount').value        = l.amount.replace(/,/g, '');
+                document.getElementById('editAmortization').value  = l.monthly_amortization.replace(/,/g, '');
+                document.getElementById('editStartDate').value     = rawDate(l.start_date);
+                document.getElementById('editTerm').value          = l.term_months;
+                document.getElementById('editNotes').value         = l.notes || '';
+                document.getElementById('editSummary').classList.add('d-none');
+
+                new bootstrap.Modal(document.getElementById('editModal')).show();
+            })
+            .catch(handleError);
+    };
+
+    window.updateEditSummary = function () {
+        const amount = parseFloat(document.getElementById('editAmount').value)       || 0;
+        const amor   = parseFloat(document.getElementById('editAmortization').value) || 0;
+        const sumEl  = document.getElementById('editSummary');
+
+        if (!amount || !amor) { sumEl.classList.add('d-none'); return; }
+
+        const totalPaid = amor * editPayments;
+        const balance   = Math.max(0, amount - totalPaid);
+        setText('editSumPaid',      editPayments);
+        setText('editSumTotalPaid', '\u20b1' + fmt(totalPaid));
+        setText('editSumBalance',   '\u20b1' + fmt(balance));
         sumEl.classList.remove('d-none');
-    } else {
-        sumEl.classList.add('d-none');
+    };
+
+    window.submitEditLoan = function () {
+        const id   = document.getElementById('editLoanId').value;
+        const amt  = document.getElementById('editAmount').value;
+        const amor = document.getElementById('editAmortization').value;
+        const date = document.getElementById('editStartDate').value;
+        const term = document.getElementById('editTerm').value;
+        const notes= document.getElementById('editNotes').value;
+
+        if (!amt || !amor || !date || !term) {
+            Swal.fire({ icon: 'warning', title: 'Incomplete', text: 'Please fill in all required fields.' });
+            return;
+        }
+
+        fetch(BASE + '/' + id, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
+            body: JSON.stringify({
+                amount: amt, monthly_amortization: amor,
+                term_months: term, start_date: date, notes: notes,
+            }),
+        })
+        .then(handleJsonResponse)
+        .then(function (res) {
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+            toast(res.message);
+            loadStats();
+            loadList();
+        })
+        .catch(handleError);
+    };
+
+    // ─── VIEW LOAN ────────────────────────────────────────────────────────────
+    window.openViewModal = function (id) {
+        const body = document.getElementById('viewModalBody');
+        body.innerHTML = '<div class="text-center py-4"><span class="spinner-border spinner-border-sm"></span></div>';
+        new bootstrap.Modal(document.getElementById('viewModal')).show();
+
+        fetch(BASE + '/' + id, { headers: { 'Accept': 'application/json' } })
+            .then(r => r.json())
+            .then(function (l) {
+                const barClass = l.loan_type === 'sss' ? 'bg-primary' : 'bg-secondary';
+                const typeBadge = '<span class="badge ' + barClass + '">' + x(l.loan_type_name) + '</span>';
+                const statusBadge = l.status === 'active'
+                    ? '<span class="badge bg-secondary">Active</span>'
+                    : '<span class="badge bg-primary">Completed</span>';
+
+                const nextSection = l.status === 'active' && l.next_payment_date ? `
+                    <div class="border rounded p-2 bg-light small mb-3">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <span class="text-muted">Next Payment Date</span><br>
+                                <strong>${x(l.next_payment_date)}</strong>
+                            </div>
+                            <div class="col-md-6">
+                                <span class="text-muted">Next Payment Amount</span><br>
+                                <strong>&#8369;${x(l.monthly_amortization)}</strong>
+                            </div>
+                        </div>
+                    </div>` : '';
+
+                const recentPayments = l.recent_payments && l.recent_payments.length
+                    ? '<div class="mt-3"><p class="text-muted small mb-1">Recent Payments</p>' +
+                      '<table class="table table-sm table-bordered mb-0 small"><thead class="table-light"><tr>' +
+                      '<th>Date</th><th class="text-end">Amount</th><th class="text-end">Balance After</th><th>Type</th>' +
+                      '</tr></thead><tbody>' +
+                      l.recent_payments.map(p =>
+                          '<tr><td>' + x(p.date) + '</td>' +
+                          '<td class="text-end">\u20b1' + x(p.amount) + '</td>' +
+                          '<td class="text-end">\u20b1' + x(p.balance_after) + '</td>' +
+                          '<td>' + x(p.type) + '</td></tr>'
+                      ).join('') +
+                      '</tbody></table></div>'
+                    : '<p class="text-muted small mt-3 mb-0">No payment records yet.</p>';
+
+                body.innerHTML = `
+                    <div class="row g-2 text-center mb-3">
+                        <div class="col-3"><div class="text-muted small">Loan ID</div><code class="small">${x(l.id)}</code></div>
+                        <div class="col-3"><div class="text-muted small">Status</div>${statusBadge}</div>
+                        <div class="col-3"><div class="text-muted small">Start Date</div><div class="small fw-medium">${x(l.start_date)}</div></div>
+                        <div class="col-3"><div class="text-muted small">Created</div><div class="small">${x(l.created_at)}</div></div>
+                    </div>
+                    <hr class="my-2">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="text-muted small mb-1">Employee</div>
+                            <div class="fw-medium">${x(l.employee)}</div>
+                            <small class="text-muted">${x(l.employee_id)}</small>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small mb-1">Loan Type</div>
+                            ${typeBadge}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-muted small mb-1">Payment Progress — ${l.payments_made}/${l.term_months} (${l.progress_percent}%)</div>
+                        <div class="progress" style="height:8px">
+                            <div class="progress-bar ${barClass}" style="width:${l.progress_percent}%"></div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="border rounded p-2">
+                                <div class="text-muted small">Remaining Balance</div>
+                                <div class="fs-5 fw-bold">&#8369;${x(l.remaining_balance)}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded p-2">
+                                <div class="text-muted small">Loan Amount</div>
+                                <div class="fw-medium">&#8369;${x(l.amount)}</div>
+                                <small class="text-muted">Monthly: &#8369;${x(l.monthly_amortization)}</small>
+                            </div>
+                        </div>
+                    </div>
+                    ${nextSection}
+                    ${recentPayments}
+                    <p class="text-muted small mt-3 mb-0">Encoded by: <strong>${x(l.encoded_by)}</strong></p>`;
+            })
+            .catch(handleError);
+    };
+
+    // ─── DELETE LOAN ─────────────────────────────────────────────────────────
+    window.openDeleteModal = function (id, employee, loanTypeName, balance) {
+        deleteLoanId = id;
+        document.getElementById('deleteInfo').innerHTML =
+            '<div><span class="text-muted">Employee:</span> <strong>' + x(employee) + '</strong></div>' +
+            '<div><span class="text-muted">Type:</span> ' + x(loanTypeName) + '</div>' +
+            '<div><span class="text-muted">Balance:</span> <strong>\u20b1' + x(balance) + '</strong></div>';
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    };
+
+    window.confirmDelete = function () {
+        const btn = document.getElementById('confirmDeleteBtn');
+        btn.disabled = true;
+
+        fetch(BASE + '/' + deleteLoanId, {
+            method: 'DELETE',
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        })
+        .then(handleJsonResponse)
+        .then(function (res) {
+            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+            toast(res.message);
+            loadStats();
+            loadList();
+        })
+        .catch(handleError)
+        .finally(function () {
+            btn.disabled = false;
+        });
+    };
+
+    // ─── UTILITIES ────────────────────────────────────────────────────────────
+    function handleJsonResponse(r) {
+        return r.json().then(function (data) {
+            if (!r.ok) return Promise.reject(data);
+            return data;
+        });
     }
-}
 
-/* ================================================
-   ADD LOAN
-   ================================================ */
-function openAddModal() {
-    ['addEmpSearch','addAmount','addAmortization','addStartDate','addEmpId'].forEach(function(id) {
-        document.getElementById(id).value = '';
-    });
-    document.getElementById('addLoanType').value = '';
-    document.getElementById('addTerm').value = '24';
-    document.getElementById('addEmpDropdown').classList.add('d-none');
-    document.getElementById('addEmpSelected').classList.add('d-none');
-    document.getElementById('addSummary').classList.add('d-none');
-    new bootstrap.Modal(document.getElementById('addModal')).show();
-}
-
-function submitAddLoan() {
-    var empId  = document.getElementById('addEmpId').value;
-    var type   = document.getElementById('addLoanType').value;
-    var amount = parseFloat(document.getElementById('addAmount').value);
-    var amor   = parseFloat(document.getElementById('addAmortization').value);
-    var date   = document.getElementById('addStartDate').value;
-    var term   = parseInt(document.getElementById('addTerm').value);
-    var emp    = EMPLOYEES.find(function(e) { return e.id === empId; });
-
-    if (!empId || !type || !amount || !amor || !date || !term || !emp) {
-        Swal.fire({ icon: 'warning', title: 'Incomplete', text: 'Please fill in all required fields.', confirmButtonColor: '#6c757d' });
-        return;
+    function handleError(err) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err && err.message ? err.message : 'Something went wrong.',
+        });
     }
 
-    loans.unshift({
-        id: generateLoanId(), employeeId: emp.id, employeeName: emp.fullName,
-        loanTypeId: type, loanTypeName: type === 'sss' ? 'SSS Loan' : 'PAG-IBIG Loan',
-        amount: amount, monthlyAmortization: amor, term: term,
-        startDate: date, paymentsMade: 0, remainingBalance: amount,
-        status: 'active', createdDate: new Date().toISOString().split('T')[0], createdBy: 'Admin'
-    });
-
-    bootstrap.Modal.getInstance(document.getElementById('addModal')).hide();
-    refresh();
-    Swal.fire({ icon: 'success', title: 'Loan Added', timer: 2000, showConfirmButton: false });
-}
-
-/* ================================================
-   EDIT LOAN
-   ================================================ */
-function openEditModal(loanId) {
-    var l = loans.find(function(x) { return x.id === loanId; });
-    if (!l) return;
-
-    document.getElementById('editLoanId').value             = l.id;
-    document.getElementById('editEmpName').textContent      = l.employeeName;
-    document.getElementById('editLoanTypeName').textContent = l.loanTypeName;
-    document.getElementById('editPaymentsMade').textContent = l.paymentsMade + '/' + l.term;
-    document.getElementById('editAmount').value             = l.amount;
-    document.getElementById('editAmortization').value       = l.monthlyAmortization;
-    document.getElementById('editStartDate').value          = l.startDate;
-    document.getElementById('editTerm').value               = l.term;
-    document.getElementById('editSummary').classList.add('d-none');
-
-    new bootstrap.Modal(document.getElementById('editModal')).show();
-}
-
-function updateEditSummary() {
-    var loanId = document.getElementById('editLoanId').value;
-    var l      = loans.find(function(x) { return x.id === loanId; });
-    var amount = parseFloat(document.getElementById('editAmount').value) || 0;
-    var amor   = parseFloat(document.getElementById('editAmortization').value) || 0;
-    var sumEl  = document.getElementById('editSummary');
-
-    if (!l || !amount || !amor) { sumEl.classList.add('d-none'); return; }
-
-    var totalPaid = amor * l.paymentsMade;
-    var balance   = Math.max(0, amount - totalPaid);
-
-    document.getElementById('editSumPaid').textContent      = l.paymentsMade;
-    document.getElementById('editSumTotalPaid').textContent = peso(totalPaid);
-    document.getElementById('editSumBalance').textContent   = peso(balance);
-    sumEl.classList.remove('d-none');
-}
-
-function submitEditLoan() {
-    var loanId = document.getElementById('editLoanId').value;
-    var amount = parseFloat(document.getElementById('editAmount').value);
-    var amor   = parseFloat(document.getElementById('editAmortization').value);
-    var date   = document.getElementById('editStartDate').value;
-    var term   = parseInt(document.getElementById('editTerm').value);
-
-    if (!amount || !amor || !date || !term) {
-        Swal.fire({ icon: 'warning', title: 'Incomplete', text: 'Please fill in all required fields.', confirmButtonColor: '#6c757d' });
-        return;
+    function toast(msg) {
+        Swal.fire({
+            toast: true, position: 'top-end', icon: 'success',
+            title: msg, showConfirmButton: false,
+            timer: 2500, timerProgressBar: true,
+        });
     }
 
-    var idx = loans.findIndex(function(x) { return x.id === loanId; });
-    if (idx === -1) return;
-
-    var l          = loans[idx];
-    var newBalance = Math.max(0, amount - (amor * l.paymentsMade));
-    loans[idx]     = Object.assign({}, l, { amount: amount, monthlyAmortization: amor, startDate: date, term: term, remainingBalance: newBalance });
-
-    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-    refresh();
-    Swal.fire({ icon: 'success', title: 'Loan Updated', timer: 2000, showConfirmButton: false });
-}
-
-/* ================================================
-   VIEW LOAN
-   ================================================ */
-function openViewModal(loanId) {
-    var l = loans.find(function(x) { return x.id === loanId; });
-    if (!l) return;
-
-    var pct    = l.term > 0 ? Math.min(100, Math.round((l.paymentsMade / l.term) * 100)) : 0;
-    var barCls = l.loanTypeId === 'sss' ? 'bg-primary' : 'bg-secondary';
-
-    var d = new Date(l.startDate);
-    d.setMonth(d.getMonth() + l.paymentsMade);
-    var nextDate = d.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
-
-    var nextSection = '';
-    if (l.status === 'active' && l.remainingBalance > 0) {
-        nextSection = '<div class="alert alert-secondary py-2 small">' +
-            '<div class="row g-2">' +
-            '<div class="col-md-6"><div class="text-muted">Next Payment Date</div><div class="fw-semibold">' + nextDate + '</div></div>' +
-            '<div class="col-md-6"><div class="text-muted">Next Payment Amount</div><div class="fw-bold">' + peso(l.monthlyAmortization) + '</div></div>' +
-            '</div></div>';
+    function setText(id, val) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val !== null && val !== undefined ? val : '—';
     }
 
-    var completedNote = l.completedDate
-        ? ' &nbsp;|&nbsp; Completed: <strong>' + new Date(l.completedDate).toLocaleDateString('en-PH') + '</strong>'
-        : '';
+    function fmt(n) {
+        return Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
 
-    document.getElementById('viewModalBody').innerHTML =
-        '<div class="row g-2 text-center mb-3">' +
-            '<div class="col-3"><div class="text-muted small mb-1">Loan ID</div><code class="text-primary small">' + l.id + '</code></div>' +
-            '<div class="col-3"><div class="text-muted small mb-1">Status</div>' + statusBadge(l.status) + '</div>' +
-            '<div class="col-3"><div class="text-muted small mb-1">Start Date</div><div class="fw-semibold small">' + new Date(l.startDate).toLocaleDateString('en-PH') + '</div></div>' +
-            '<div class="col-3"><div class="text-muted small mb-1">Created</div><div class="fw-semibold small">' + new Date(l.createdDate).toLocaleDateString('en-PH') + '</div></div>' +
-        '</div>' +
-        '<hr class="my-2">' +
-        '<div class="row g-3 mb-3">' +
-            '<div class="col-md-6"><div class="text-muted small mb-1">Employee</div><div class="fw-bold">' + l.employeeName + '</div><div class="text-muted small">' + l.employeeId + '</div></div>' +
-            '<div class="col-md-6"><div class="text-muted small mb-1">Loan Type</div>' + loanTypeBadge(l.loanTypeId, l.loanTypeName) + '</div>' +
-        '</div>' +
-        '<div class="mb-3">' +
-            '<div class="text-muted small mb-1">Payment Progress</div>' +
-            '<div class="d-flex align-items-center gap-2">' +
-                '<div class="progress flex-grow-1" style="height:10px"><div class="progress-bar ' + barCls + '" style="width:' + pct + '%"></div></div>' +
-                '<span class="fw-bold small text-nowrap">' + l.paymentsMade + '/' + l.term + '</span>' +
-            '</div>' +
-            '<small class="text-muted">' + pct + '% completed</small>' +
-        '</div>' +
-        '<div class="row g-3 mb-3">' +
-            '<div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">Remaining Balance</div>' +
-                '<div class="fs-4 fw-bold' + (l.remainingBalance > 0 ? '' : ' text-muted') + '">' + peso(l.remainingBalance) + '</div></div></div>' +
-            '<div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">Loan Amount</div>' +
-                '<div class="fs-5 fw-semibold">' + peso(l.amount) + '</div>' +
-                '<div class="text-muted small">Monthly: ' + peso(l.monthlyAmortization) + '</div></div></div>' +
-        '</div>' +
-        nextSection +
-        '<div class="text-muted small">Created by: <strong>' + (l.createdBy || '\u2014') + '</strong>' + completedNote + '</div>';
+    /**
+     * Convert "Mar 01, 2025" back to "2025-03-01" for date inputs.
+     * Falls back to empty string if the format is not parseable.
+     */
+    function rawDate(str) {
+        if (!str) return '';
+        const d = new Date(str);
+        if (isNaN(d)) return '';
+        return d.toISOString().split('T')[0];
+    }
 
-    new bootstrap.Modal(document.getElementById('viewModal')).show();
-}
+    function x(str) {
+        if (str == null) return '';
+        return String(str)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
 
-/* ================================================
-   DELETE LOAN
-   ================================================ */
-function openDeleteModal(loanId) {
-    var l = loans.find(function(x) { return x.id === loanId; });
-    if (!l) return;
-    deleteLoanId = loanId;
-    document.getElementById('deleteInfo').innerHTML =
-        '<div><strong>Loan ID:</strong> ' + l.id + '</div>' +
-        '<div><strong>Employee:</strong> ' + l.employeeName + '</div>' +
-        '<div><strong>Type:</strong> ' + l.loanTypeName + '</div>' +
-        '<div><strong>Balance:</strong> ' + peso(l.remainingBalance) + '</div>';
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
-}
-
-function confirmDelete() {
-    loans = loans.filter(function(l) { return l.id !== deleteLoanId; });
-    bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
-    deleteLoanId = null;
-    refresh();
-    Swal.fire({ icon: 'success', title: 'Loan Deleted', timer: 1800, showConfirmButton: false });
-}
-
-/* ================================================
-   INIT
-   ================================================ */
-function refresh() {
-    updateStats();
-    renderTable();
-}
-
-document.addEventListener('DOMContentLoaded', function() { refresh(); });
+})();
 </script>
 @endpush

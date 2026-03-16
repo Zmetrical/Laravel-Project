@@ -10,112 +10,66 @@
     </ol>
 @endsection
 
-@push('styles')
-<style>
-    .stat-card { transition: box-shadow .15s; }
-    .stat-card:hover { box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.12); }
-    .table > tbody > tr > td { vertical-align: middle; }
-    #dept-table tbody tr { cursor: default; }
-    .badge-dept { font-size: .7rem; letter-spacing: .04em; }
-</style>
-@endpush
-
 @section('content')
 
+@include('components.alerts')
+
 {{-- Page Header --}}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h4 class="mb-0 fw-semibold">Department Management</h4>
         <small class="text-muted">Organize and manage company departments</small>
     </div>
-    <button class="btn btn-primary btn-sm" onclick="openAddModal()">
-        <i class="bi bi-plus-lg me-1"></i> Add Department
-    </button>
+    <button class="btn btn-secondary btn-sm" onclick="openAddModal()">Add Department</button>
 </div>
 
 {{-- Stat Cards --}}
-<div class="row g-3 mb-4" id="stat-cards">
+<div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">
-        <div class="card stat-card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="rounded-3 bg-primary bg-opacity-10 p-3 flex-shrink-0">
-                    <i class="bi bi-building fs-4 text-primary"></i>
-                </div>
-                <div>
-                    <div class="text-muted small">Total Departments</div>
-                    <div class="fs-4 fw-bold" id="stat-total">—</div>
-                    <div class="text-muted" style="font-size:.75rem;" id="stat-active-sub">— active</div>
-                </div>
-            </div>
+        <div class="card card-body h-100">
+            <div class="text-muted small mb-1">Total Departments</div>
+            <div class="fs-4 fw-bold" id="stat-total">—</div>
+            <div class="text-muted small" id="stat-active-sub">— active</div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="card stat-card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="rounded-3 bg-secondary bg-opacity-10 p-3 flex-shrink-0">
-                    <i class="bi bi-people fs-4 text-secondary"></i>
-                </div>
-                <div>
-                    <div class="text-muted small">Total Employees</div>
-                    <div class="fs-4 fw-bold" id="stat-employees">—</div>
-                    <div class="text-muted" style="font-size:.75rem;">Across all departments</div>
-                </div>
-            </div>
+        <div class="card card-body h-100">
+            <div class="text-muted small mb-1">Total Employees</div>
+            <div class="fs-4 fw-bold" id="stat-employees">—</div>
+            <div class="text-muted small">Across all departments</div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="card stat-card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="rounded-3 bg-primary bg-opacity-10 p-3 flex-shrink-0">
-                    <i class="bi bi-bar-chart fs-4 text-primary"></i>
-                </div>
-                <div>
-                    <div class="text-muted small">Largest Department</div>
-                    <div class="fw-bold" id="stat-largest-name" style="font-size:1rem;">—</div>
-                    <div class="text-muted" style="font-size:.75rem;" id="stat-largest-count">—</div>
-                </div>
-            </div>
+        <div class="card card-body h-100">
+            <div class="text-muted small mb-1">Largest Department</div>
+            <div class="fw-bold" id="stat-largest-name">—</div>
+            <div class="text-muted small" id="stat-largest-count">—</div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="card stat-card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="rounded-3 bg-secondary bg-opacity-10 p-3 flex-shrink-0">
-                    <i class="bi bi-geo-alt fs-4 text-secondary"></i>
-                </div>
-                <div>
-                    <div class="text-muted small">Branches</div>
-                    <div class="fs-4 fw-bold" id="stat-branches">—</div>
-                    <div class="text-muted" style="font-size:.75rem;" id="stat-branches-sub">—</div>
-                </div>
-            </div>
+        <div class="card card-body h-100">
+            <div class="text-muted small mb-1">Branches</div>
+            <div class="fs-4 fw-bold" id="stat-branches">—</div>
+            <div class="text-muted small" id="stat-branches-sub">—</div>
         </div>
     </div>
 </div>
 
 {{-- Filter + Table --}}
-<div class="card border-0 shadow-sm">
-    <div class="card-header bg-white border-bottom">
+<div class="card shadow-sm">
+    <div class="card-header">
         <div class="row g-2 align-items-end">
             <div class="col-md-4">
-                <label class="form-label text-muted small mb-1">Search</label>
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-transparent border-end-0">
-                        <i class="bi bi-search text-muted"></i>
-                    </span>
-                    <input type="text" id="filter-search" class="form-control border-start-0 ps-0"
-                        placeholder="Name, code, or head…">
-                </div>
+                <input type="text" id="filter-search" class="form-control form-control-sm"
+                    placeholder="Search name, code…" oninput="debounceList()">
             </div>
             <div class="col-md-3">
-                <label class="form-label text-muted small mb-1">Branch</label>
-                <select id="filter-branch" class="form-select form-select-sm">
+                <select id="filter-branch" class="form-select form-select-sm" onchange="loadList()">
                     <option value="">All Branches</option>
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label text-muted small mb-1">Status</label>
-                <select id="filter-status" class="form-select form-select-sm">
+                <select id="filter-status" class="form-select form-select-sm" onchange="loadList()">
                     <option value="">All Status</option>
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
@@ -123,80 +77,81 @@
             </div>
             <div class="col-md-3 text-md-end">
                 <button class="btn btn-outline-secondary btn-sm" onclick="resetFilters()">
-                    <i class="bi bi-x-circle me-1"></i>Clear Filters
+                    Clear Filters
                 </button>
             </div>
         </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover mb-0" id="dept-table">
+            <table class="table table-hover table-sm align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th class="ps-4" style="width:22%">Department</th>
+                        <th class="ps-3" style="width:22%">Department</th>
                         <th style="width:10%">Code</th>
-                        <th style="width:20%">Head(s)</th>
+                        <th style="width:22%">Head(s)</th>
                         <th style="width:10%">Employees</th>
                         <th style="width:16%">Branch</th>
                         <th style="width:10%">Status</th>
-                        <th style="width:12%" class="text-center">Actions</th>
+                        <th class="text-center pe-3" style="width:10%">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="dept-tbody">
-                    <tr id="empty-row">
+                    <tr>
                         <td colspan="7" class="text-center text-muted py-5">
-                            <i class="bi bi-building fs-1 d-block mb-2 opacity-25"></i>
-                            No departments found
+                            <span class="spinner-border spinner-border-sm me-2"></span>Loading…
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
-    <div class="card-footer bg-white text-muted small d-flex justify-content-between align-items-center">
-        <span id="table-count">Showing 0 departments</span>
-        <span id="table-total-employees"></span>
+    <div class="card-footer text-muted small d-flex justify-content-between">
+        <span id="table-count">—</span>
+        <span id="table-emp-count"></span>
     </div>
 </div>
 
-{{-- ===================== ADD / EDIT MODAL ===================== --}}
+{{-- ===== MODAL: ADD / EDIT ===== --}}
 <div class="modal fade" id="deptModal" tabindex="-1" aria-labelledby="deptModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="deptModalLabel">Add New Department</h5>
+                <h5 class="modal-title" id="deptModalLabel">Add Department</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <input type="hidden" id="modal-dept-id">
+                <input type="hidden" id="modal-id">
 
                 <div class="row g-3">
-                    {{-- Name + Code --}}
                     <div class="col-md-7">
-                        <label class="form-label">Department Name <span class="text-danger">*</span></label>
-                        <input type="text" id="modal-name" class="form-control" placeholder="e.g., Production">
+                        <label class="form-label fw-medium">
+                            Department Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" id="modal-name" class="form-control form-control-sm"
+                            placeholder="e.g., Production"
+                            oninput="onNameInput()">
                     </div>
                     <div class="col-md-5">
-                        <label class="form-label">Department Code <span class="text-danger">*</span></label>
-                        <input type="text" id="modal-code" class="form-control" placeholder="e.g., PROD"
+                        <label class="form-label fw-medium">
+                            Code <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" id="modal-code" class="form-control form-control-sm"
+                            placeholder="e.g., PROD"
                             oninput="this.value = this.value.toUpperCase()">
                     </div>
-
-                    {{-- Description --}}
                     <div class="col-12">
-                        <label class="form-label">Description</label>
-                        <textarea id="modal-description" class="form-control" rows="2"
-                            placeholder="Brief description of this department…"></textarea>
+                        <label class="form-label fw-medium">Description</label>
+                        <textarea id="modal-description" class="form-control form-control-sm"
+                            rows="2" placeholder="Brief description…"></textarea>
                     </div>
-
-                    {{-- Branch + Status --}}
                     <div class="col-md-8">
-                        <label class="form-label">Branch</label>
-                        <select id="modal-branch" class="form-select"></select>
+                        <label class="form-label fw-medium">Branch</label>
+                        <select id="modal-branch" class="form-select form-select-sm"></select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Status</label>
-                        <select id="modal-status" class="form-select">
+                        <label class="form-label fw-medium">Status</label>
+                        <select id="modal-status" class="form-select form-select-sm">
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                         </select>
@@ -204,21 +159,20 @@
 
                     {{-- Department Heads --}}
                     <div class="col-12">
-                        <label class="form-label">Department Head(s)</label>
+                        <label class="form-label fw-medium">Department Head(s)</label>
                         <div id="heads-container" class="d-flex flex-column gap-2"></div>
                         <button type="button" class="btn btn-outline-secondary btn-sm mt-2"
-                            onclick="addHeadRow()">
-                            <i class="bi bi-plus-lg me-1"></i> Add Another Head
-                        </button>
-                        <div class="form-text">Only supervisors / managers within the selected department are shown.</div>
+                            onclick="addHeadRow()">+ Add Another Head</button>
+                        <div class="form-text">
+                            Shows employees with supervisory/managerial positions in this department.
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="modal-save-btn" onclick="saveDepartment()">
-                    Create Department
-                </button>
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-secondary btn-sm" id="modal-save-btn"
+                    onclick="saveDepartment()">Create Department</button>
             </div>
         </div>
     </div>
@@ -226,410 +180,369 @@
 
 @endsection
 
-
 @push('scripts')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <script>
+(function () {
+    'use strict';
 
-let branches = [
-    { id: 1, name: 'Meycauayan Main' },
-    { id: 2, name: 'Obando Branch' },
-    { id: 3, name: 'Marilao Branch' },
-];
+    // ─── CONFIG ──────────────────────────────────────────────────────────────
+    const CSRF = '{{ csrf_token() }}';
+    const BASE = '{{ url("/admin/departments") }}';
 
-let employees = [
-    { id: 'EMP001', name: 'Maria Santos',    position: 'Production Manager',   department: 'Production',     status: 'active' },
-    { id: 'EMP002', name: 'Jose Reyes',      position: 'QA Supervisor',        department: 'Quality Assurance', status: 'active' },
-    { id: 'EMP003', name: 'Ana Cruz',        position: 'HR Officer',           department: 'Human Resources', status: 'active' },
-    { id: 'EMP004', name: 'Pedro Dela Cruz', position: 'Accounting Supervisor',department: 'Accounting',     status: 'active' },
-    { id: 'EMP005', name: 'Linda Garcia',    position: 'IT Manager',           department: 'IT',             status: 'active' },
-    { id: 'EMP006', name: 'Ramon Torres',    position: 'Logistics Supervisor', department: 'Logistics',      status: 'active' },
-    { id: 'EMP007', name: 'Cynthia Lim',     position: 'Admin Head',           department: 'Administration', status: 'active' },
-    { id: 'EMP008', name: 'Danilo Bautista', position: 'Maintenance Supervisor',department: 'Maintenance',  status: 'active' },
-    { id: 'EMP009', name: 'Rosa Mendoza',    position: 'Sales Manager',        department: 'Sales',          status: 'active' },
-    { id: 'EMP010', name: 'Carlo Navarro',   position: 'Security Team Leader', department: 'Security',       status: 'active' },
-    // extra rank-and-file
-    { id: 'EMP011', name: 'Mark Villanueva', position: 'Production Operator',  department: 'Production',     status: 'active' },
-    { id: 'EMP012', name: 'Susan Aquino',    position: 'QA Inspector',         department: 'Quality Assurance', status: 'active' },
-    { id: 'EMP013', name: 'Jerome Castillo', position: 'Accountant',           department: 'Accounting',     status: 'active' },
-    { id: 'EMP014', name: 'Nora Espinosa',   position: 'HR Assistant',         department: 'Human Resources', status: 'active' },
-    { id: 'EMP015', name: 'Rina Delos Reyes',position: 'IT Support',           department: 'IT',             status: 'active' },
-];
+    // ─── STATE ───────────────────────────────────────────────────────────────
+    let headRows      = [];   // [{ value: 'EMP001' }, …]
+    let headCandidates= [];   // fetched from server
+    let searchTimer   = null;
 
-let departments = [
-    { id: 'DEPT001', name: 'Production',        code: 'PROD', description: 'Core manufacturing operations', headName: 'Maria Santos',    headId: 'EMP001', branch: 'Meycauayan Main', status: 'active',   employeeCount: 85 },
-    { id: 'DEPT002', name: 'Quality Assurance', code: 'QA',   description: 'Quality control and testing',   headName: 'Jose Reyes',      headId: 'EMP002', branch: 'Meycauayan Main', status: 'active',   employeeCount: 32 },
-    { id: 'DEPT003', name: 'Human Resources',   code: 'HR',   description: 'Talent and employee relations', headName: 'Ana Cruz',        headId: 'EMP003', branch: 'Meycauayan Main', status: 'active',   employeeCount: 18 },
-    { id: 'DEPT004', name: 'Accounting',        code: 'ACCT', description: 'Finance and payroll',           headName: 'Pedro Dela Cruz', headId: 'EMP004', branch: 'Meycauayan Main', status: 'active',   employeeCount: 24 },
-    { id: 'DEPT005', name: 'IT',                code: 'IT',   description: 'Systems and infrastructure',    headName: 'Linda Garcia',    headId: 'EMP005', branch: 'Meycauayan Main', status: 'active',   employeeCount: 12 },
-    { id: 'DEPT006', name: 'Logistics',         code: 'LOG',  description: 'Warehouse and delivery',        headName: 'Ramon Torres',    headId: 'EMP006', branch: 'Obando Branch',   status: 'active',   employeeCount: 41 },
-    { id: 'DEPT007', name: 'Administration',    code: 'ADMIN',description: 'General admin and support',     headName: 'Cynthia Lim',     headId: 'EMP007', branch: 'Meycauayan Main', status: 'active',   employeeCount: 9  },
-    { id: 'DEPT008', name: 'Maintenance',       code: 'MAINT',description: 'Facilities and equipment',      headName: 'Danilo Bautista', headId: 'EMP008', branch: 'Marilao Branch',  status: 'active',   employeeCount: 22 },
-    { id: 'DEPT009', name: 'Sales',             code: 'SALES',description: 'Client relations and sales',    headName: 'Rosa Mendoza',    headId: 'EMP009', branch: 'Obando Branch',   status: 'inactive', employeeCount: 15 },
-    { id: 'DEPT010', name: 'Security',          code: 'SEC',  description: 'Site security and access',      headName: 'Carlo Navarro',   headId: 'EMP010', branch: 'Meycauayan Main', status: 'active',   employeeCount: 19 },
-];
+    // ─── INIT ─────────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        loadStats();
+        loadBranches();
+        loadList();
 
-/* ================================================================
-   LEADERSHIP KEYWORDS for head candidate filtering
-   ================================================================ */
-const LEADER_KEYWORDS = ['supervisor','manager','team leader','head','officer','lead'];
-
-function isLeader(position) {
-    if (!position) return false;
-    const p = position.toLowerCase();
-    return LEADER_KEYWORDS.some(k => p.includes(k));
-}
-
-/* ================================================================
-   HELPERS
-   ================================================================ */
-function uniqueBranches() {
-    return [...new Set(branches.map(b => b.name))];
-}
-
-function getLeadersForDept(deptName) {
-    return employees.filter(e =>
-        e.department === deptName &&
-        e.status === 'active' &&
-        isLeader(e.position)
-    );
-}
-
-function computeStats() {
-    const total    = departments.length;
-    const active   = departments.filter(d => d.status === 'active').length;
-    const totalEmp = departments.reduce((s, d) => s + d.employeeCount, 0);
-    const largest  = departments.reduce((m, d) => d.employeeCount > (m?.employeeCount ?? -1) ? d : m, null);
-    const branchCount = uniqueBranches().length;
-    const mainBranch  = branches[0]?.name ?? '';
-
-    document.getElementById('stat-total').textContent       = total;
-    document.getElementById('stat-active-sub').textContent  = `${active} active`;
-    document.getElementById('stat-employees').textContent   = totalEmp.toLocaleString();
-    document.getElementById('stat-largest-name').textContent = largest?.name ?? '—';
-    document.getElementById('stat-largest-count').textContent = largest ? `${largest.employeeCount} employees` : '';
-    document.getElementById('stat-branches').textContent    = branchCount;
-    document.getElementById('stat-branches-sub').textContent = mainBranch;
-}
-
-function populateBranchFilters() {
-    const branchSelect  = document.getElementById('filter-branch');
-    const modalBranch   = document.getElementById('modal-branch');
-    branchSelect.innerHTML = '<option value="">All Branches</option>';
-    modalBranch.innerHTML  = '';
-    uniqueBranches().forEach(b => {
-        branchSelect.innerHTML += `<option value="${b}">${b}</option>`;
-        modalBranch.innerHTML  += `<option value="${b}">${b}</option>`;
-    });
-}
-
-/* ================================================================
-   TABLE RENDERING
-   ================================================================ */
-function renderTable() {
-    const search = document.getElementById('filter-search').value.toLowerCase().trim();
-    const branch = document.getElementById('filter-branch').value;
-    const status = document.getElementById('filter-status').value;
-
-    const filtered = departments.filter(d => {
-        const matchSearch = !search ||
-            d.name.toLowerCase().includes(search) ||
-            d.code.toLowerCase().includes(search) ||
-            d.headName.toLowerCase().includes(search);
-        const matchBranch = !branch || d.branch === branch;
-        const matchStatus = !status || d.status === status;
-        return matchSearch && matchBranch && matchStatus;
+        document.getElementById('filter-search').addEventListener('input', debounceList);
+        document.getElementById('filter-branch').addEventListener('change', loadList);
+        document.getElementById('filter-status').addEventListener('change', loadList);
     });
 
-    const tbody = document.getElementById('dept-tbody');
-    const emptyRow = document.getElementById('empty-row');
-
-    // Remove existing data rows (not the empty-row template)
-    tbody.querySelectorAll('tr.data-row').forEach(r => r.remove());
-
-    if (filtered.length === 0) {
-        emptyRow.style.display = '';
-    } else {
-        emptyRow.style.display = 'none';
-        filtered.forEach(d => {
-            const tr = document.createElement('tr');
-            tr.className = 'data-row';
-            tr.innerHTML = `
-                <td class="ps-4">
-                    <div class="fw-semibold">${escHtml(d.name)}</div>
-                    <small class="text-muted">${escHtml(d.description)}</small>
-                </td>
-                <td>
-                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 badge-dept fw-semibold">
-                        ${escHtml(d.code)}
-                    </span>
-                </td>
-                <td>
-                    <div class="fw-medium">${escHtml(d.headName) || '<span class="text-muted">—</span>'}</div>
-                    <small class="text-muted">${escHtml(d.headId)}</small>
-                </td>
-                <td>
-                    <span class="fw-semibold">${d.employeeCount}</span>
-                </td>
-                <td class="text-muted">${escHtml(d.branch)}</td>
-                <td>
-                    ${d.status === 'active'
-                        ? `<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 badge-dept">Active</span>`
-                        : `<span class="badge bg-light text-muted border badge-dept">Inactive</span>`
-                    }
-                </td>
-                <td class="text-center">
-                    <button class="btn btn-sm btn-outline-primary btn-icon me-1" title="Edit"
-                        onclick="openEditModal('${d.id}')">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary btn-icon" title="Delete"
-                        onclick="deleteDepartment('${d.id}')">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+    // ─── STATS ────────────────────────────────────────────────────────────────
+    function loadStats() {
+        fetch(BASE + '/stats', { headers: { Accept: 'application/json' } })
+            .then(r => r.json())
+            .then(function (d) {
+                setText('stat-total',       d.total);
+                setText('stat-active-sub',  d.active + ' active');
+                setText('stat-employees',   Number(d.total_employees).toLocaleString());
+                setText('stat-largest-name',d.largest_name);
+                setText('stat-largest-count', d.largest_count + ' employees');
+                setText('stat-branches',    d.branch_count);
+                setText('stat-branches-sub',d.main_branch);
+            })
+            .catch(console.error);
     }
 
-    // Footer counts
-    const shownEmp = filtered.reduce((s, d) => s + d.employeeCount, 0);
-    document.getElementById('table-count').textContent =
-        `Showing ${filtered.length} of ${departments.length} department${departments.length !== 1 ? 's' : ''}`;
-    document.getElementById('table-total-employees').textContent =
-        filtered.length < departments.length ? `${shownEmp} employees in view` : '';
-}
+    // ─── BRANCHES (filter + modal) ────────────────────────────────────────────
+    function loadBranches() {
+        fetch(BASE + '/branches', { headers: { Accept: 'application/json' } })
+            .then(r => r.json())
+            .then(function (branches) {
+                const filterSel = document.getElementById('filter-branch');
+                const modalSel  = document.getElementById('modal-branch');
 
-function escHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+                filterSel.innerHTML = '<option value="">All Branches</option>';
+                modalSel.innerHTML  = '<option value="">— None —</option>';
 
-/* ================================================================
-   HEAD ROWS (modal)
-   ================================================================ */
-let headRows = []; // array of { value }
+                branches.forEach(function (b) {
+                    filterSel.innerHTML += '<option value="' + x(b) + '">' + x(b) + '</option>';
+                    modalSel.innerHTML  += '<option value="' + x(b) + '">' + x(b) + '</option>';
+                });
+            })
+            .catch(console.error);
+    }
 
-function renderHeadRows(deptName) {
-    const container  = document.getElementById('heads-container');
-    const candidates = getLeadersForDept(deptName);
-    container.innerHTML = '';
+    // ─── LIST ─────────────────────────────────────────────────────────────────
+    window.loadList = function () {
+        const tbody  = document.getElementById('dept-tbody');
+        const search = document.getElementById('filter-search').value;
+        const branch = document.getElementById('filter-branch').value;
+        const status = document.getElementById('filter-status').value;
 
-    if (headRows.length === 0) headRows = [{ value: '' }];
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">' +
+            '<span class="spinner-border spinner-border-sm me-2"></span>Loading\u2026</td></tr>';
 
-    headRows.forEach((row, idx) => {
-        const div = document.createElement('div');
-        div.className = 'input-group input-group-sm';
-        div.innerHTML = `
-            <select class="form-select" onchange="headRows[${idx}].value = this.value">
-                <option value="">— Select department head —</option>
-                ${candidates.map(c =>
-                    `<option value="${escHtml(c.id)}" ${row.value === c.id ? 'selected' : ''}>
-                        ${escHtml(c.name)} — ${escHtml(c.position)}
-                    </option>`
-                ).join('')}
-            </select>
-            ${headRows.length > 1
-                ? `<button class="btn btn-outline-secondary" type="button" onclick="removeHeadRow(${idx})">
-                        <i class="bi bi-x"></i>
-                   </button>`
-                : ''}
-        `;
-        container.appendChild(div);
-    });
-}
+        const url = BASE + '/list?' + new URLSearchParams({ search, branch, status });
 
-function addHeadRow() {
-    const deptName = getModalDeptName();
-    headRows.push({ value: '' });
-    renderHeadRows(deptName);
-}
+        fetch(url, { headers: { Accept: 'application/json' } })
+            .then(r => r.json())
+            .then(renderTable)
+            .catch(function () {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">' +
+                    'Failed to load data.</td></tr>';
+            });
+    };
 
-function removeHeadRow(idx) {
-    headRows.splice(idx, 1);
-    renderHeadRows(getModalDeptName());
-}
+    function renderTable(data) {
+        const tbody = document.getElementById('dept-tbody');
 
-function getModalDeptName() {
-    return document.getElementById('modal-name').value.trim();
-}
-
-/* ================================================================
-   MODAL: ADD
-   ================================================================ */
-function openAddModal() {
-    document.getElementById('deptModalLabel').textContent = 'Add New Department';
-    document.getElementById('modal-save-btn').textContent = 'Create Department';
-    document.getElementById('modal-dept-id').value    = '';
-    document.getElementById('modal-name').value       = '';
-    document.getElementById('modal-code').value       = '';
-    document.getElementById('modal-description').value = '';
-    document.getElementById('modal-status').value     = 'active';
-    document.getElementById('modal-branch').value     = branches[0]?.name ?? '';
-
-    headRows = [{ value: '' }];
-    renderHeadRows('');
-
-    // Refresh heads when name changes
-    document.getElementById('modal-name').oninput = () => renderHeadRows(getModalDeptName());
-
-    new bootstrap.Modal(document.getElementById('deptModal')).show();
-}
-
-/* ================================================================
-   MODAL: EDIT
-   ================================================================ */
-function openEditModal(id) {
-    const dept = departments.find(d => d.id === id);
-    if (!dept) return;
-
-    document.getElementById('deptModalLabel').textContent   = 'Edit Department';
-    document.getElementById('modal-save-btn').textContent   = 'Save Changes';
-    document.getElementById('modal-dept-id').value          = dept.id;
-    document.getElementById('modal-name').value             = dept.name;
-    document.getElementById('modal-code').value             = dept.code;
-    document.getElementById('modal-description').value      = dept.description;
-    document.getElementById('modal-status').value           = dept.status;
-
-    // Set branch (wait for DOM)
-    const branchSel = document.getElementById('modal-branch');
-    setTimeout(() => { branchSel.value = dept.branch; }, 0);
-
-    // Build head rows from stored headId(s)
-    const ids = dept.headId ? dept.headId.split(',').map(s => s.trim()).filter(Boolean) : [];
-    headRows = ids.length ? ids.map(v => ({ value: v })) : [{ value: '' }];
-    renderHeadRows(dept.name);
-
-    document.getElementById('modal-name').oninput = () => renderHeadRows(getModalDeptName());
-
-    new bootstrap.Modal(document.getElementById('deptModal')).show();
-}
-
-/* ================================================================
-   SAVE (create or update)
-   ================================================================ */
-function saveDepartment() {
-    const id          = document.getElementById('modal-dept-id').value;
-    const name        = document.getElementById('modal-name').value.trim();
-    const code        = document.getElementById('modal-code').value.trim();
-    const description = document.getElementById('modal-description').value.trim();
-    const branch      = document.getElementById('modal-branch').value;
-    const status      = document.getElementById('modal-status').value;
-
-    if (!name) { showToast('Department name is required.', 'error'); return; }
-    if (!code) { showToast('Department code is required.', 'error'); return; }
-
-    // Resolve head IDs → names
-    const selectedIds   = headRows.map(r => r.value).filter(Boolean);
-    const resolvedNames = selectedIds.map(eid => {
-        const e = employees.find(emp => emp.id === eid);
-        return e ? e.name : '';
-    }).filter(Boolean);
-
-    const headId   = selectedIds.join(', ');
-    const headName = resolvedNames.join(', ');
-
-    if (id) {
-        // UPDATE
-        const idx = departments.findIndex(d => d.id === id);
-        if (idx !== -1) {
-            departments[idx] = { ...departments[idx], name, code, description, branch, status, headId, headName };
-            showToast('Department updated successfully.', 'success');
-        }
-    } else {
-        // CREATE
-        // Guard duplicate code
-        if (departments.some(d => d.code === code)) {
-            showToast(`Code "${code}" is already in use.`, 'error');
+        if (!data.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-5">' +
+                'No departments found.</td></tr>';
+            setText('table-count', 'Showing 0 departments');
+            setText('table-emp-count', '');
             return;
         }
-        departments.push({
-            id: 'DEPT' + Date.now(),
-            name, code, description, branch, status,
-            headId, headName, employeeCount: 0,
+
+        const totalEmp = data.reduce(function (s, d) { return s + (d.employee_count || 0); }, 0);
+
+        tbody.innerHTML = data.map(function (d) {
+            const statusBadge = d.status === 'active'
+                ? '<span class="badge bg-secondary">Active</span>'
+                : '<span class="badge bg-primary">Inactive</span>';
+
+            const actions = '<button class="btn btn-sm btn-link p-1 text-secondary" title="Edit" ' +
+                'onclick="openEditModal(' + d.id + ')"><i class="bi bi-pencil"></i></button>' +
+                '<button class="btn btn-sm btn-link p-1 text-secondary" title="Delete" ' +
+                'onclick="deleteDept(' + d.id + ', \'' + x(d.name) + '\', ' + d.employee_count + ')"><i class="bi bi-trash"></i></button>';
+
+            return '<tr>' +
+                '<td class="ps-3">' +
+                    '<div class="fw-medium">' + x(d.name) + '</div>' +
+                    '<small class="text-muted">' + x(d.description) + '</small>' +
+                '</td>' +
+                '<td><span class="badge bg-secondary">' + x(d.code) + '</span></td>' +
+                '<td>' +
+                    '<div class="small">' + x(d.head_names) + '</div>' +
+                '</td>' +
+                '<td class="fw-medium">' + d.employee_count + '</td>' +
+                '<td class="text-muted small">' + x(d.branch) + '</td>' +
+                '<td>' + statusBadge + '</td>' +
+                '<td class="text-center pe-3">' + actions + '</td>' +
+                '</tr>';
+        }).join('');
+
+        setText('table-count', 'Showing ' + data.length + ' department(s)');
+        setText('table-emp-count', totalEmp + ' employees in view');
+    }
+
+    // ─── HEAD ROWS ────────────────────────────────────────────────────────────
+    function loadHeadCandidates(deptName, callback) {
+        const url = BASE + '/head-candidates?' + new URLSearchParams({ department: deptName || '' });
+        fetch(url, { headers: { Accept: 'application/json' } })
+            .then(r => r.json())
+            .then(function (data) {
+                headCandidates = data;
+                if (callback) callback();
+            })
+            .catch(console.error);
+    }
+
+    function renderHeadRows() {
+        const container = document.getElementById('heads-container');
+        container.innerHTML = '';
+
+        if (!headRows.length) headRows = [{ value: '' }];
+
+        headRows.forEach(function (row, idx) {
+            const div = document.createElement('div');
+            div.className = 'input-group input-group-sm';
+
+            const options = headCandidates.map(function (c) {
+                const sel = row.value === c.id ? ' selected' : '';
+                return '<option value="' + x(c.id) + '"' + sel + '>' +
+                    x(c.full_name) + ' \u2014 ' + x(c.position) + '</option>';
+            }).join('');
+
+            const removeBtn = headRows.length > 1
+                ? '<button class="btn btn-outline-secondary" type="button" ' +
+                  'onclick="removeHeadRow(' + idx + ')"><i class="bi bi-x"></i></button>'
+                : '';
+
+            div.innerHTML = '<select class="form-select" ' +
+                'onchange="headRows[' + idx + '].value = this.value">' +
+                '<option value="">\u2014 Select head \u2014</option>' +
+                options +
+                '</select>' + removeBtn;
+
+            container.appendChild(div);
         });
-        showToast('Department created successfully.', 'success');
     }
 
-    bootstrap.Modal.getInstance(document.getElementById('deptModal')).hide();
-    refresh();
-}
+    window.addHeadRow = function () {
+        headRows.push({ value: '' });
+        renderHeadRows();
+    };
 
-/* ================================================================
-   DELETE
-   ================================================================ */
-function deleteDepartment(id) {
-    const dept = departments.find(d => d.id === id);
-    if (!dept) return;
+    window.removeHeadRow = function (idx) {
+        headRows.splice(idx, 1);
+        renderHeadRows();
+    };
 
-    if (dept.employeeCount > 0) {
-        showToast(`Cannot delete "${dept.name}" — it has ${dept.employeeCount} employee(s). Reassign them first.`, 'error');
-        return;
-    }
+    window.onNameInput = function () {
+        const name = document.getElementById('modal-name').value.trim();
+        loadHeadCandidates(name, renderHeadRows);
+    };
 
-    Swal.fire({
-        title: 'Delete Department?',
-        html: `<p class="mb-1"><strong>${escHtml(dept.name)}</strong> (${escHtml(dept.code)})</p>
-               <p class="text-muted small">Branch: ${escHtml(dept.branch)}</p>
-               <p class="text-danger small mb-0">This action cannot be undone.</p>`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, delete it',
-        confirmButtonColor: '#6c757d',
-        cancelButtonColor: '#0d6efd',
-        reverseButtons: true,
-    }).then(result => {
-        if (result.isConfirmed) {
-            departments = departments.filter(d => d.id !== id);
-            showToast(`"${dept.name}" has been deleted.`, 'success');
-            refresh();
+    // ─── ADD MODAL ────────────────────────────────────────────────────────────
+    window.openAddModal = function () {
+        setText('deptModalLabel', 'Add Department');
+        document.getElementById('modal-save-btn').textContent = 'Create Department';
+        document.getElementById('modal-id').value          = '';
+        document.getElementById('modal-name').value        = '';
+        document.getElementById('modal-code').value        = '';
+        document.getElementById('modal-description').value = '';
+        document.getElementById('modal-status').value      = 'active';
+
+        headRows       = [{ value: '' }];
+        headCandidates = [];
+        renderHeadRows();
+
+        new bootstrap.Modal(document.getElementById('deptModal')).show();
+    };
+
+    // ─── EDIT MODAL ───────────────────────────────────────────────────────────
+    window.openEditModal = function (id) {
+        // Fetch from list (already loaded) — find in DOM data or re-fetch
+        fetch(BASE + '/list', { headers: { Accept: 'application/json' } })
+            .then(r => r.json())
+            .then(function (data) {
+                const d = data.find(function (r) { return r.id === id; });
+                if (!d) return;
+
+                setText('deptModalLabel', 'Edit Department');
+                document.getElementById('modal-save-btn').textContent = 'Save Changes';
+                document.getElementById('modal-id').value          = d.id;
+                document.getElementById('modal-name').value        = d.name;
+                document.getElementById('modal-code').value        = d.code;
+                document.getElementById('modal-description').value = d.description;
+                document.getElementById('modal-status').value      = d.status;
+
+                // Set branch after branches are populated
+                setTimeout(function () {
+                    document.getElementById('modal-branch').value = d.branch !== '—' ? d.branch : '';
+                }, 50);
+
+                headRows = (d.head_ids || []).map(function (v) { return { value: v }; });
+                if (!headRows.length) headRows = [{ value: '' }];
+
+                loadHeadCandidates(d.name, renderHeadRows);
+
+                new bootstrap.Modal(document.getElementById('deptModal')).show();
+            });
+    };
+
+    // ─── SAVE ─────────────────────────────────────────────────────────────────
+    window.saveDepartment = function () {
+        const id          = document.getElementById('modal-id').value;
+        const name        = document.getElementById('modal-name').value.trim();
+        const code        = document.getElementById('modal-code').value.trim();
+        const description = document.getElementById('modal-description').value.trim();
+        const branch      = document.getElementById('modal-branch').value;
+        const status      = document.getElementById('modal-status').value;
+        const headIds     = headRows.map(function (r) { return r.value; }).filter(Boolean);
+
+        if (!name) { toast('Department name is required.', 'warning'); return; }
+        if (!code) { toast('Department code is required.', 'warning'); return; }
+
+        const btn     = document.getElementById('modal-save-btn');
+        btn.disabled  = true;
+        const origTxt = btn.textContent;
+        btn.textContent = 'Saving\u2026';
+
+        const url    = id ? BASE + '/' + id : BASE;
+        const method = id ? 'PATCH' : 'POST';
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept':       'application/json',
+                'X-CSRF-TOKEN': CSRF,
+            },
+            body: JSON.stringify({
+                name, code, description, branch, status,
+                head_employee_ids: headIds,
+            }),
+        })
+        .then(handleJson)
+        .then(function (res) {
+            bootstrap.Modal.getInstance(document.getElementById('deptModal')).hide();
+            toast(res.message);
+            loadStats();
+            loadList();
+        })
+        .catch(handleError)
+        .finally(function () {
+            btn.disabled    = false;
+            btn.textContent = origTxt;
+        });
+    };
+
+    // ─── DELETE ───────────────────────────────────────────────────────────────
+    window.deleteDept = function (id, name, empCount) {
+        if (empCount > 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Cannot Delete',
+                text: '"' + name + '" has ' + empCount + ' active employee(s). Reassign them first.',
+            });
+            return;
         }
-    });
-}
 
-/* ================================================================
-   FILTERS
-   ================================================================ */
-function resetFilters() {
-    document.getElementById('filter-search').value = '';
-    document.getElementById('filter-branch').value = '';
-    document.getElementById('filter-status').value = '';
-    renderTable();
-}
+        Swal.fire({
+            title: 'Delete Department?',
+            html: '<strong>' + x(name) + '</strong> will be permanently removed.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete',
+            confirmButtonColor: '#6c757d',
+            reverseButtons: true,
+        }).then(function (result) {
+            if (!result.isConfirmed) return;
 
-/* ================================================================
-   TOAST (uses SweetAlert2 mixin)
-   ================================================================ */
-const Toast = Swal.mixin({
-    toast: true, position: 'top-end', showConfirmButton: false,
-    timer: 3000, timerProgressBar: true,
-});
+            fetch(BASE + '/' + id, {
+                method: 'DELETE',
+                headers: { Accept: 'application/json', 'X-CSRF-TOKEN': CSRF },
+            })
+            .then(handleJson)
+            .then(function (res) {
+                toast(res.message);
+                loadStats();
+                loadList();
+            })
+            .catch(handleError);
+        });
+    };
 
-function showToast(msg, type = 'success') {
-    Toast.fire({ icon: type, title: msg });
-}
+    // ─── FILTERS ──────────────────────────────────────────────────────────────
+    window.resetFilters = function () {
+        document.getElementById('filter-search').value = '';
+        document.getElementById('filter-branch').value = '';
+        document.getElementById('filter-status').value = '';
+        loadList();
+    };
 
-/* ================================================================
-   REFRESH
-   ================================================================ */
-function refresh() {
-    computeStats();
-    renderTable();
-}
+    window.debounceList = function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(loadList, 350);
+    };
 
-/* ================================================================
-   BOOT
-   ================================================================ */
-document.addEventListener('DOMContentLoaded', () => {
-    populateBranchFilters();
-    refresh();
+    // ─── UTILITIES ────────────────────────────────────────────────────────────
+    function handleJson(r) {
+        return r.json().then(function (data) {
+            if (!r.ok) return Promise.reject(data);
+            return data;
+        });
+    }
 
-    // Live filters
-    ['filter-search', 'filter-branch', 'filter-status'].forEach(id => {
-        document.getElementById(id).addEventListener('input', renderTable);
-        document.getElementById(id).addEventListener('change', renderTable);
-    });
-});
+    function handleError(err) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err && err.message ? err.message : 'Something went wrong.',
+        });
+    }
+
+    function toast(msg, icon) {
+        Swal.fire({
+            toast: true, position: 'top-end',
+            icon: icon || 'success', title: msg,
+            showConfirmButton: false, timer: 2800, timerProgressBar: true,
+        });
+    }
+
+    function setText(id, val) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val !== null && val !== undefined ? val : '—';
+    }
+
+    function x(str) {
+        if (str == null) return '';
+        return String(str)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+})();
 </script>
 @endpush

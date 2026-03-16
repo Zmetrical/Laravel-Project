@@ -2,847 +2,576 @@
 Payroll System ph
 ==============
 
-can you recreate this page. here is my root and my template for pages
-no need to create the db logic like just the frontend onyl
-maybe recreate the js functionality and data 
-samples do it in js with arrays not html hardcoded the datas
+i want to recreate an existing payroll system project
+but with differenent setup
+maybe a normal or common payroll system
+because from the system i have reference it is very different flow and structure
+i want to recreate it page by page to update it to change the functionality of flow
 
 No custom css just admin lte bootstrap and its plugins for ui
 secondary(primary color) primary(secondary color) and seconday(tertiary) color is enough
-dont use info, warning, danger or any other colors
+can you not use any colors inside the content blade so its user friendly and straightforward
+can you minimize the icons
 
-minimize using color keep it professional
 use laravel best practices
 and give suggestions first 
 when structuring a complext integrations
 
+here is my db schema
 
+
+{{-- resources/views/components/alerts.blade.php --}}
+
+@if (session('success'))
+    @push('scripts')
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: '{{ session('success') }}',
+            timer: 3000,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end',
+        });
+    </script>
+    @endpush
+@endif
+
+@if (session('error'))
+    @push('scripts')
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: '{{ session('error') }}',
+        });
+    </script>
+    @endpush
+@endif
+
+@if ($errors->any())
+    @push('scripts')
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Validation Error',
+            html: `{!! implode('<br>', $errors->all()) !!}`,
+        });
+    </script>
+    @endpush
+@endif
+
+use this for response 
 --
--- Database: fast_services_payroll
+-- Database: `cldg_pms`
 --
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table attendance_correction_requests
+-- Table structure for table `attendance_records`
 --
 
-CREATE TABLE attendance_correction_requests (
-  id varchar(50) NOT NULL,
-  employeeId varchar(10) NOT NULL,
-  employeeName varchar(255) NOT NULL,
-  date date NOT NULL,
-  currentTimeIn time DEFAULT NULL,
-  currentTimeOut time DEFAULT NULL,
-  requestedTimeIn time DEFAULT NULL,
-  requestedTimeOut time DEFAULT NULL,
-  reason text NOT NULL,
-  status enum('pending','approved','rejected') DEFAULT 'pending',
-  submittedDate datetime NOT NULL,
-  reviewedBy varchar(255) DEFAULT NULL,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `attendance_records` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` varchar(10) NOT NULL,
+  `date` date NOT NULL,
+  `time_in` time DEFAULT NULL,
+  `time_out` time DEFAULT NULL,
+  `hours_worked` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `late_minutes` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `undertime_minutes` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `overtime_hours` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `status` enum('present','absent','late','half_day','leave','holiday','rest_day','incomplete') NOT NULL DEFAULT 'incomplete',
+  `notes` text DEFAULT NULL,
+  `is_biometric` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'True if synced from biometric device',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table attendance_records
+-- Table structure for table `cache`
 --
 
-CREATE TABLE attendance_records (
-  id varchar(50) NOT NULL,
-  employeeId varchar(10) NOT NULL,
-  employeeName varchar(255) NOT NULL,
-  date date NOT NULL,
-  timeIn time DEFAULT NULL,
-  timeOut time DEFAULT NULL,
-  hoursWorked decimal(5,2) DEFAULT 0.00,
-  status enum('present','absent','late','halfday','leave','overtime','incomplete') NOT NULL,
-  overtimeHours decimal(5,2) DEFAULT 0.00,
-  shift varchar(50) NOT NULL,
-  scheduledStart time DEFAULT NULL,
-  scheduledEnd time DEFAULT NULL,
-  issues text DEFAULT NULL,
-  shiftType enum('day','night') DEFAULT NULL,
-  scheduleId varchar(50) DEFAULT NULL,
-  isAdditionalShift tinyint(1) DEFAULT 0,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  isTestMode tinyint(1) DEFAULT 0
+CREATE TABLE `cache` (
+  `key` varchar(255) NOT NULL,
+  `value` mediumtext NOT NULL,
+  `expiration` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table audit_logs
+-- Table structure for table `cache_locks`
 --
 
-CREATE TABLE audit_logs (
-  id varchar(50) NOT NULL,
-  timestamp datetime NOT NULL,
-  userId varchar(10) NOT NULL,
-  userName varchar(255) NOT NULL,
-  userRole varchar(50) NOT NULL,
-  action varchar(50) NOT NULL,
-  module varchar(100) NOT NULL,
-  description text NOT NULL,
-  affectedId varchar(50) DEFAULT NULL,
-  affectedData text DEFAULT NULL,
-  ipAddress varchar(45) NOT NULL,
-  status enum('success','failed') DEFAULT 'success',
-  createdAt timestamp NOT NULL DEFAULT current_timestamp()
+CREATE TABLE `cache_locks` (
+  `key` varchar(255) NOT NULL,
+  `owner` varchar(255) NOT NULL,
+  `expiration` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table branches
+-- Table structure for table `failed_jobs`
 --
 
-CREATE TABLE branches (
-  id int(11) NOT NULL,
-  code varchar(20) NOT NULL,
-  name varchar(100) NOT NULL,
-  address text DEFAULT NULL,
-  isActive tinyint(1) DEFAULT 1
+CREATE TABLE `failed_jobs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `uuid` varchar(255) NOT NULL,
+  `connection` text NOT NULL,
+  `queue` text NOT NULL,
+  `payload` longtext NOT NULL,
+  `exception` longtext NOT NULL,
+  `failed_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table day_off_configurations
+-- Table structure for table `holidays`
 --
 
-CREATE TABLE day_off_configurations (
-  id int(11) NOT NULL,
-  day enum('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday') NOT NULL,
-  employeeId varchar(10) NOT NULL,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `holidays` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `date` date NOT NULL,
+  `type` enum('regular','special') NOT NULL,
+  `year` smallint(5) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table deduction_suspensions
+-- Table structure for table `jobs`
 --
 
-CREATE TABLE deduction_suspensions (
-  id varchar(50) NOT NULL,
-  employeeId varchar(10) NOT NULL,
-  employeeName varchar(255) NOT NULL,
-  leaveRequestId varchar(50) DEFAULT NULL,
-  caseType varchar(100) NOT NULL,
-  suspensionType enum('maternity-leave','unpaid-leave','manual') NOT NULL,
-  status enum('pending-accounting-approval','pending-plan-approval','active','carry-forward','in-payment','matured','cancelled','completed','employee-paid') DEFAULT 'pending-accounting-approval',
-  suspendedAmount decimal(12,2) NOT NULL,
-  sssContribution decimal(12,2) DEFAULT 0.00,
-  philhealthContribution decimal(12,2) DEFAULT 0.00,
-  pagibigContribution decimal(12,2) DEFAULT 0.00,
-  withholdingTax decimal(12,2) DEFAULT 0.00,
-  period varchar(100) NOT NULL,
-  createdDate datetime NOT NULL,
-  createdBy varchar(255) NOT NULL,
-  accountingApprovedDate datetime DEFAULT NULL,
-  accountingApprovedBy varchar(255) DEFAULT NULL,
-  notes text DEFAULT NULL,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `jobs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `queue` varchar(255) NOT NULL,
+  `payload` longtext NOT NULL,
+  `attempts` tinyint(3) UNSIGNED NOT NULL,
+  `reserved_at` int(10) UNSIGNED DEFAULT NULL,
+  `available_at` int(10) UNSIGNED NOT NULL,
+  `created_at` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table default_employee_schedules
+-- Table structure for table `job_batches`
 --
 
-CREATE TABLE default_employee_schedules (
-  id int(11) NOT NULL,
-  employeeId varchar(10) NOT NULL,
-  employeeName varchar(255) NOT NULL,
-  department varchar(100) NOT NULL,
-  defaultShift enum('Day','Night') NOT NULL,
-  sundayOff tinyint(1) DEFAULT 1,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `job_batches` (
+  `id` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `total_jobs` int(11) NOT NULL,
+  `pending_jobs` int(11) NOT NULL,
+  `failed_jobs` int(11) NOT NULL,
+  `failed_job_ids` longtext NOT NULL,
+  `options` mediumtext DEFAULT NULL,
+  `cancelled_at` int(11) DEFAULT NULL,
+  `created_at` int(11) NOT NULL,
+  `finished_at` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table deferred_deductions
+-- Table structure for table `leave_balances`
 --
 
-CREATE TABLE deferred_deductions (
-  id int(11) NOT NULL,
-  employeeId varchar(10) NOT NULL,
-  period varchar(100) NOT NULL,
-  deductionType varchar(50) NOT NULL,
-  amount decimal(12,2) NOT NULL,
-  reason text NOT NULL,
-  status enum('pending','carried-forward','collected','waived') DEFAULT 'pending',
-  deferredDate datetime NOT NULL,
-  collectedDate datetime DEFAULT NULL,
-  collectedInPeriod varchar(100) DEFAULT NULL,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `leave_balances` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` varchar(10) NOT NULL,
+  `leave_type_id` bigint(20) UNSIGNED NOT NULL,
+  `year` year(4) NOT NULL,
+  `entitled_days` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `carried_over_days` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `used_days` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `pending_days` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `balance` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table departments
+-- Table structure for table `leave_requests`
 --
 
-CREATE TABLE departments (
-  id int(11) NOT NULL,
-  code varchar(20) NOT NULL,
-  name varchar(100) NOT NULL,
-  description text DEFAULT NULL,
-  employeeCount int(11) DEFAULT 0,
-  branchId int(11) DEFAULT NULL,
-  headName varchar(255) DEFAULT NULL COMMENT 'Name of the department head',
-  headId varchar(10) DEFAULT NULL COMMENT 'User ID of the department head',
-  isActive tinyint(1) DEFAULT 1,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `leave_requests` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` varchar(10) NOT NULL,
+  `leave_type_id` bigint(20) UNSIGNED NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `days` smallint(5) UNSIGNED NOT NULL,
+  `reason` text NOT NULL,
+  `attachments` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`attachments`)),
+  `status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  `rejection_reason` text DEFAULT NULL,
+  `reviewed_by` varchar(10) DEFAULT NULL,
+  `reviewed_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table employee_default_schedules
+-- Table structure for table `leave_transactions`
 --
 
-CREATE TABLE employee_default_schedules (
-  id int(11) NOT NULL,
-  employeeId varchar(10) NOT NULL,
-  employeeName varchar(255) NOT NULL,
-  department varchar(100) NOT NULL,
-  defaultShift enum('Day','Night') NOT NULL DEFAULT 'Day',
-  sundayOff tinyint(1) NOT NULL DEFAULT 1,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Stores base Day/Night shift assignment per employee for weekly rotation logic';
-
--- --------------------------------------------------------
-
---
--- Table structure for table general_settings
---
-
-CREATE TABLE general_settings (
-  id int(11) NOT NULL,
-  deviceIp varchar(50) NOT NULL DEFAULT '192.168.1.201',
-  port varchar(10) NOT NULL DEFAULT '4370',
-  status enum('Connected','Disconnected','Error') DEFAULT 'Disconnected',
-  lastSync datetime DEFAULT NULL,
-  createdAt datetime NOT NULL DEFAULT current_timestamp(),
-  updatedAt datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  updatedBy varchar(50) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table government_contributions
---
-
-CREATE TABLE government_contributions (
-  contributionId int(11) NOT NULL,
-  employeeId varchar(10) NOT NULL,
-  payrollPeriod varchar(100) NOT NULL,
-  payrollId varchar(50) DEFAULT NULL,
-  sssEE decimal(12,2) DEFAULT 0.00 COMMENT 'SSS Employee Share',
-  sssER decimal(12,2) DEFAULT 0.00 COMMENT 'SSS Employer Share',
-  philHealthEE decimal(12,2) DEFAULT 0.00 COMMENT 'PhilHealth Employee Share',
-  philHealthER decimal(12,2) DEFAULT 0.00 COMMENT 'PhilHealth Employer Share',
-  pagibigEE decimal(12,2) DEFAULT 0.00 COMMENT 'Pag-IBIG Employee Share',
-  pagibigER decimal(12,2) DEFAULT 0.00 COMMENT 'Pag-IBIG Employer Share',
-  totalEE decimal(12,2) DEFAULT 0.00 COMMENT 'Total Employee Contributions',
-  totalER decimal(12,2) DEFAULT 0.00 COMMENT 'Total Employer Contributions',
-  totalContribution decimal(12,2) DEFAULT 0.00 COMMENT 'Grand Total (EE + ER)',
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `leave_transactions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` varchar(10) NOT NULL,
+  `leave_type_id` bigint(20) UNSIGNED NOT NULL,
+  `year` year(4) NOT NULL,
+  `transaction_type` enum('accrual','usage','adjustment','carry_over','carry_expire','reversal') NOT NULL,
+  `days` decimal(5,2) NOT NULL,
+  `balance_after` decimal(5,2) NOT NULL,
+  `reference_type` varchar(255) DEFAULT NULL,
+  `reference_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
+  `created_by` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table government_report_history
+-- Table structure for table `leave_types`
 --
 
-CREATE TABLE government_report_history (
-  id int(11) NOT NULL,
-  period varchar(50) NOT NULL,
-  year int(11) NOT NULL,
-  month int(11) NOT NULL,
-  status enum('pending','submitted','overdue') DEFAULT 'pending',
-  sssSubmitted tinyint(1) DEFAULT 0,
-  philhealthSubmitted tinyint(1) DEFAULT 0,
-  pagibigSubmitted tinyint(1) DEFAULT 0,
-  birSubmitted tinyint(1) DEFAULT 0,
-  sssSubmittedDate datetime DEFAULT NULL,
-  philhealthSubmittedDate datetime DEFAULT NULL,
-  pagibigSubmittedDate datetime DEFAULT NULL,
-  birSubmittedDate datetime DEFAULT NULL,
-  lastGenerated datetime DEFAULT NULL,
-  generationHistory longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(generationHistory)),
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `leave_types` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `is_paid` tinyint(1) NOT NULL DEFAULT 1,
+  `max_days_per_year` smallint(5) UNSIGNED NOT NULL DEFAULT 15,
+  `requires_approval` tinyint(1) NOT NULL DEFAULT 1,
+  `description` text DEFAULT NULL,
+  `is_carry_over_allowed` tinyint(1) NOT NULL DEFAULT 0,
+  `max_carry_over_days` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
+  `applicable_to` enum('all','male','female') NOT NULL DEFAULT 'all',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table leave_limit_department_settings
+-- Table structure for table `loans`
 --
 
-CREATE TABLE leave_limit_department_settings (
-  id int(11) NOT NULL,
-  departmentId int(11) NOT NULL,
-  percentage decimal(5,2) DEFAULT 20.00,
-  dailyLimit int(11) NOT NULL DEFAULT 0,
-  dayShiftMax int(11) NOT NULL DEFAULT 0,
-  nightShiftMax int(11) NOT NULL DEFAULT 0,
-  createdAt datetime NOT NULL DEFAULT current_timestamp(),
-  updatedAt datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  updatedBy varchar(50) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table leave_limit_global_settings
---
-
-CREATE TABLE leave_limit_global_settings (
-  id int(11) NOT NULL,
-  enableDailyLimits tinyint(1) NOT NULL DEFAULT 0,
-  globalPercentageLimit decimal(5,2) NOT NULL DEFAULT 20.00,
-  fcfsEnabled tinyint(1) NOT NULL DEFAULT 1,
-  hrOverrideEnabled tinyint(1) NOT NULL DEFAULT 1,
-  showWarnings tinyint(1) NOT NULL DEFAULT 1,
-  autoReject tinyint(1) NOT NULL DEFAULT 0,
-  createdAt datetime NOT NULL DEFAULT current_timestamp(),
-  updatedAt datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  updatedBy varchar(50) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table leave_limit_shift_settings
---
-
-CREATE TABLE leave_limit_shift_settings (
-  id int(11) NOT NULL,
-  enablePerShiftLimits tinyint(1) NOT NULL DEFAULT 0,
-  dayShiftPercentage decimal(5,2) NOT NULL DEFAULT 50.00,
-  nightShiftPercentage decimal(5,2) NOT NULL DEFAULT 50.00,
-  minStaffingWarning tinyint(1) NOT NULL DEFAULT 1,
-  minStaffingThreshold decimal(5,2) NOT NULL DEFAULT 80.00,
-  createdAt datetime NOT NULL DEFAULT current_timestamp(),
-  updatedAt datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  updatedBy varchar(50) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table leave_requests
---
-
-CREATE TABLE leave_requests (
-  id varchar(50) NOT NULL,
-  employeeId varchar(10) NOT NULL,
-  employeeName varchar(255) NOT NULL,
-  type varchar(100) NOT NULL,
-  startDate date NOT NULL,
-  endDate date NOT NULL,
-  days int(11) NOT NULL,
-  reason text NOT NULL,
-  status enum('pending','approved','validated','rejected','accounting-approved') DEFAULT 'pending',
-  submittedDate datetime NOT NULL,
-  reviewedBy varchar(255) DEFAULT NULL,
-  reviewDate datetime DEFAULT NULL,
-  accountingApprovedBy varchar(255) DEFAULT NULL,
-  accountingApprovedDate datetime DEFAULT NULL,
-  rejectionReason text DEFAULT NULL,
-  deductionHandling enum('normal','suspended','carry-forward','employee-pays') DEFAULT NULL,
-  accountingNotes text DEFAULT NULL,
-  payrollImpact longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(payrollImpact)),
-  attachments longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(attachments)),
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `loans` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` varchar(10) NOT NULL,
+  `loan_type` enum('sss','pagibig') NOT NULL,
+  `loan_type_name` varchar(100) NOT NULL,
+  `amount` decimal(12,2) NOT NULL,
+  `monthly_amortization` decimal(10,2) NOT NULL,
+  `term_months` smallint(5) UNSIGNED NOT NULL,
+  `start_date` date NOT NULL,
+  `completed_date` date DEFAULT NULL,
+  `status` enum('active','completed','cancelled') NOT NULL DEFAULT 'active',
+  `encoded_by` varchar(10) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table leave_types
+-- Table structure for table `loan_payments`
 --
 
-CREATE TABLE leave_types (
-  id varchar(50) NOT NULL,
-  name varchar(100) NOT NULL,
-  isPaid tinyint(1) DEFAULT 1,
-  maxDaysPerYear int(11) DEFAULT 15,
-  requiresApproval tinyint(1) DEFAULT 1,
-  description text DEFAULT NULL,
-  color varchar(20) DEFAULT '#3b82f6',
-  isActive tinyint(1) DEFAULT 1,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `loan_payments` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `loan_id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` varchar(10) NOT NULL,
+  `payroll_record_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `balance_after` decimal(10,2) NOT NULL,
+  `payment_date` date NOT NULL,
+  `payment_type` enum('payroll_deduction','manual') NOT NULL DEFAULT 'payroll_deduction',
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table loan_applications
+-- Table structure for table `migrations`
 --
 
-CREATE TABLE loan_applications (
-  id varchar(50) NOT NULL,
-  employeeId varchar(10) NOT NULL,
-  employeeName varchar(255) NOT NULL,
-  loanTypeId varchar(50) NOT NULL,
-  loanTypeName varchar(100) NOT NULL,
-  amount decimal(12,2) NOT NULL,
-  monthlyAmortization decimal(12,2) NOT NULL,
-  term int(11) NOT NULL,
-  startDate date NOT NULL,
-  paymentsMade int(11) DEFAULT 0,
-  remainingBalance decimal(12,2) NOT NULL,
-  status enum('active','completed') DEFAULT 'active',
-  createdDate datetime NOT NULL,
-  createdBy varchar(255) DEFAULT NULL,
-  completedDate datetime DEFAULT NULL,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `migrations` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `migration` varchar(255) NOT NULL,
+  `batch` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table loan_payments
+-- Table structure for table `overtime_configurations`
 --
 
-CREATE TABLE loan_payments (
-  paymentId int(11) NOT NULL,
-  loanId int(11) NOT NULL,
-  employeeId varchar(50) NOT NULL,
-  amount decimal(10,2) NOT NULL,
-  paymentDate datetime NOT NULL,
-  payrollPeriod varchar(50) NOT NULL,
-  status enum('pending','completed','failed') DEFAULT 'pending',
-  payrollRecordId int(11) DEFAULT NULL,
-  notes text DEFAULT NULL,
-  createdAt datetime NOT NULL DEFAULT current_timestamp(),
-  updatedAt datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table overtime_rates
---
-
-CREATE TABLE overtime_rates (
-  id varchar(50) NOT NULL,
-  name varchar(100) NOT NULL,
-  description text DEFAULT NULL,
-  multiplier decimal(4,2) NOT NULL,
-  appliesTo varchar(50) NOT NULL,
-  department varchar(100) DEFAULT NULL,
-  isActive tinyint(1) DEFAULT 1,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `overtime_configurations` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `daily_max_hours` decimal(4,2) NOT NULL DEFAULT 8.00,
+  `weekly_max_hours` decimal(5,2) NOT NULL DEFAULT 48.00,
+  `monthly_max_hours` decimal(6,2) NOT NULL DEFAULT 192.00,
+  `enforce_limit` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'true = block submission, false = warn only',
+  `updated_by` varchar(10) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table overtime_requests
+-- Table structure for table `overtime_rates`
 --
 
-CREATE TABLE overtime_requests (
-  id varchar(50) NOT NULL,
-  employeeId varchar(10) NOT NULL,
-  employeeName varchar(255) NOT NULL,
-  date date NOT NULL,
-  startTime time NOT NULL,
-  endTime time NOT NULL,
-  hours decimal(5,2) NOT NULL,
-  type varchar(100) NOT NULL,
-  reason text NOT NULL,
-  status enum('pending','supervisor-approved','approved','paid','rejected','accounting-approved') DEFAULT 'pending',
-  submittedDate datetime NOT NULL,
-  rate decimal(10,2) NOT NULL,
-  estimatedPay decimal(10,2) NOT NULL,
-  supervisorReviewedBy varchar(255) DEFAULT NULL,
-  supervisorReviewDate datetime DEFAULT NULL,
-  hrReviewedBy varchar(255) DEFAULT NULL,
-  hrReviewDate datetime DEFAULT NULL,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `overtime_rates` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `multiplier` decimal(4,2) NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table payroll_deductions
+-- Table structure for table `overtime_requests`
 --
 
-CREATE TABLE payroll_deductions (
-  deductionId int(11) NOT NULL,
-  payrollId int(11) NOT NULL,
-  employeeId varchar(50) NOT NULL,
-  deductionType enum('sss','philhealth','pagibig','tax','loan','other') NOT NULL,
-  amount decimal(10,2) NOT NULL,
-  description text DEFAULT NULL,
-  createdAt datetime NOT NULL DEFAULT current_timestamp(),
-  updatedAt datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table payroll_records
---
-
-CREATE TABLE payroll_records (
-  id varchar(50) NOT NULL,
-  employeeId varchar(10) NOT NULL,
-  employeeName varchar(255) NOT NULL,
-  department varchar(100) NOT NULL,
-  period varchar(100) NOT NULL,
-  basicPay decimal(12,2) DEFAULT 0.00,
-  nightDiff decimal(12,2) DEFAULT 0.00,
-  leavePay decimal(12,2) DEFAULT 0.00,
-  restDayPay decimal(12,2) DEFAULT 0.00,
-  restDayType enum('regular','special_holiday','regular_holiday') DEFAULT NULL,
-  restDayHasNightShift tinyint(1) DEFAULT 0,
-  holidayPay decimal(12,2) DEFAULT 0.00,
-  additionalShiftPay decimal(12,2) DEFAULT 0.00,
-  additionalShiftBasePay decimal(12,2) DEFAULT 0.00,
-  additionalShiftHolidayPay decimal(12,2) DEFAULT 0.00,
-  additionalShiftNightDiff decimal(12,2) DEFAULT 0.00,
-  additionalShiftOvertimePay decimal(12,2) DEFAULT 0.00,
-  additionalShiftLateDeductions decimal(12,2) DEFAULT 0.00,
-  additionalShiftUndertimeDeductions decimal(12,2) DEFAULT 0.00,
-  additionalShiftCount int(11) DEFAULT 0,
-  overtimePay decimal(12,2) DEFAULT 0.00,
-  mealAllowance decimal(12,2) DEFAULT 0.00,
-  transportAllowance decimal(12,2) DEFAULT 0.00,
-  allowances decimal(12,2) DEFAULT 0.00,
-  grossPay decimal(12,2) DEFAULT 0.00,
-  sss decimal(12,2) DEFAULT 0.00,
-  philHealth decimal(12,2) DEFAULT 0.00,
-  pagIbig decimal(12,2) DEFAULT 0.00,
-  tax decimal(12,2) DEFAULT 0.00,
-  loanDeductions decimal(12,2) DEFAULT 0.00,
-  lateDeductions decimal(12,2) DEFAULT 0.00,
-  undertimeDeductions decimal(12,2) DEFAULT 0.00,
-  absentDeductions decimal(12,2) DEFAULT 0.00,
-  companyDeductions decimal(12,2) DEFAULT 0.00,
-  otherDeductions decimal(12,2) DEFAULT 0.00,
-  totalDeductions decimal(12,2) DEFAULT 0.00,
-  netPay decimal(12,2) DEFAULT 0.00,
-  status enum('pending','approved','paid') DEFAULT 'pending',
-  paymentDate date NOT NULL,
-  createdDate datetime NOT NULL,
-  released tinyint(1) DEFAULT 0,
-  payDate date NOT NULL,
-  appliedDeductions decimal(12,2) DEFAULT 0.00,
-  deferredBalance decimal(12,2) DEFAULT 0.00,
-  hasDeferred tinyint(1) DEFAULT 0,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `overtime_requests` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` varchar(10) NOT NULL,
+  `date` date NOT NULL,
+  `hours` decimal(5,2) NOT NULL,
+  `ot_type` varchar(100) NOT NULL,
+  `rate_multiplier` decimal(4,2) NOT NULL,
+  `estimated_pay` decimal(12,2) NOT NULL,
+  `reason` text DEFAULT NULL,
+  `status` enum('pending','approved','rejected','paid') NOT NULL DEFAULT 'pending',
+  `reviewed_by` varchar(10) DEFAULT NULL,
+  `reviewed_at` timestamp NULL DEFAULT NULL,
+  `rejection_note` text DEFAULT NULL,
+  `paid_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table payroll_settings
+-- Table structure for table `password_reset_tokens`
 --
 
-CREATE TABLE payroll_settings (
-  id int(11) NOT NULL,
-  nightDifferential decimal(5,2) NOT NULL DEFAULT 10.00,
-  regularOt decimal(5,2) NOT NULL DEFAULT 1.25,
-  restDayOt decimal(5,2) NOT NULL DEFAULT 1.30,
-  regularHoliday decimal(5,2) NOT NULL DEFAULT 2.00,
-  specialHoliday decimal(5,2) NOT NULL DEFAULT 1.30,
-  nightShift decimal(5,2) NOT NULL DEFAULT 0.10,
-  gracePeriod int(11) NOT NULL DEFAULT 10,
-  regularLeaveCredits int(11) NOT NULL DEFAULT 15,
-  maxConsecutiveLeaveDays int(11) NOT NULL DEFAULT 5,
-  leaveCarryOver tinyint(1) NOT NULL DEFAULT 0,
-  thirteenthMonthMethod enum('basic_divided_12','total_basic_earned') DEFAULT 'basic_divided_12',
-  createdAt datetime NOT NULL DEFAULT current_timestamp(),
-  updatedAt datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  updatedBy varchar(50) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table positions
---
-
-CREATE TABLE positions (
-  id int(11) NOT NULL,
-  code varchar(20) NOT NULL,
-  name varchar(100) NOT NULL,
-  department varchar(100) DEFAULT NULL,
-  description text DEFAULT NULL,
-  isActive tinyint(1) DEFAULT 1
+CREATE TABLE `password_reset_tokens` (
+  `email` varchar(255) NOT NULL,
+  `token` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table profile_update_requests
+-- Table structure for table `payroll_periods`
 --
 
-CREATE TABLE profile_update_requests (
-  id varchar(50) NOT NULL,
-  employeeId varchar(10) NOT NULL,
-  employeeName varchar(255) NOT NULL,
-  field varchar(100) NOT NULL,
-  oldValue text DEFAULT NULL,
-  newValue text NOT NULL,
-  reason text NOT NULL,
-  status enum('pending','approved','rejected') DEFAULT 'pending',
-  submittedDate datetime NOT NULL,
-  reviewedBy varchar(255) DEFAULT NULL,
-  reviewDate datetime DEFAULT NULL,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `payroll_periods` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `period_type` enum('1st-15th','16th-end') NOT NULL,
+  `month` tinyint(3) UNSIGNED NOT NULL,
+  `year` smallint(5) UNSIGNED NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `pay_date` date NOT NULL,
+  `status` enum('draft','processing','released','closed') NOT NULL DEFAULT 'draft',
+  `processed_by` varchar(10) DEFAULT NULL,
+  `released_by` varchar(10) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table salary_configs
+-- Table structure for table `payroll_records`
 --
 
-CREATE TABLE salary_configs (
-  id int(11) NOT NULL,
-  employeeId varchar(10) NOT NULL,
-  basicSalary decimal(12,2) NOT NULL,
-  dailyRate decimal(12,2) NOT NULL,
-  hourlyRate decimal(12,2) NOT NULL,
-  overtimeRate decimal(12,2) NOT NULL,
-  allowanceRice decimal(12,2) DEFAULT 0.00,
-  allowanceTransportation decimal(12,2) DEFAULT 0.00,
-  allowanceCommunication decimal(12,2) DEFAULT 0.00,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `payroll_records` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `payroll_period_id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` varchar(10) NOT NULL,
+  `basic_pay` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `overtime_pay` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `night_diff_pay` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `holiday_pay` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `rest_day_pay` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `leave_pay` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `additional_shift_pay` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `allowances` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `gross_pay` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `sss` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `philhealth` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `pagibig` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `withholding_tax` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `late_deductions` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `undertime_deductions` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `absent_deductions` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `other_deductions` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `deferred_balance` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `total_deductions` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `net_pay` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `status` enum('draft','released') NOT NULL DEFAULT 'draft',
+  `notes` text DEFAULT NULL,
+  `released_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table schedules
+-- Table structure for table `profile_update_requests`
 --
 
-CREATE TABLE schedules (
-  id varchar(50) NOT NULL,
-  employeeId varchar(10) NOT NULL,
-  employeeName varchar(255) NOT NULL,
-  department varchar(100) NOT NULL,
-  date date NOT NULL,
-  shift varchar(50) NOT NULL,
-  startTime time NOT NULL,
-  endTime time NOT NULL,
-  status enum('scheduled','completed','absent','modified') DEFAULT 'scheduled',
-  shiftType enum('day','night') DEFAULT NULL,
-  isAdditionalShift tinyint(1) DEFAULT 0,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `profile_update_requests` (
+  `id` varchar(50) NOT NULL,
+  `employeeId` varchar(10) NOT NULL,
+  `employeeName` varchar(255) NOT NULL,
+  `field` varchar(100) NOT NULL,
+  `oldValue` text DEFAULT NULL,
+  `newValue` text NOT NULL,
+  `reason` text NOT NULL,
+  `status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  `submittedDate` datetime NOT NULL,
+  `reviewedBy` varchar(255) DEFAULT NULL,
+  `reviewDate` datetime DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table schedule_adjustment_requests
+-- Table structure for table `schedule_templates`
 --
 
-CREATE TABLE schedule_adjustment_requests (
-  id varchar(50) NOT NULL,
-  employeeId varchar(10) NOT NULL,
-  employeeName varchar(255) NOT NULL,
-  requestedDate date NOT NULL,
-  currentShift varchar(50) NOT NULL,
-  requestedShift varchar(50) NOT NULL,
-  reason text NOT NULL,
-  status enum('pending','approved','rejected') DEFAULT 'pending',
-  submittedDate datetime NOT NULL,
-  reviewedBy varchar(255) DEFAULT NULL,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `schedule_templates` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `grace_period_minutes` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table shift_swap_slots
+-- Table structure for table `schedule_template_days`
 --
 
-CREATE TABLE shift_swap_slots (
-  id varchar(50) NOT NULL,
-  date date NOT NULL,
-  originalEmployeeId varchar(10) NOT NULL,
-  originalEmployeeName varchar(255) NOT NULL,
-  originalShift enum('Day','Night') NOT NULL,
-  originalStartTime time NOT NULL,
-  originalEndTime time NOT NULL,
-  department varchar(100) NOT NULL,
-  status enum('available','taken') DEFAULT 'available',
-  requestingEmployeeId varchar(10) DEFAULT NULL,
-  requestingEmployeeName varchar(255) DEFAULT NULL,
-  takenAt datetime DEFAULT NULL,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `schedule_template_days` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `template_id` bigint(20) UNSIGNED NOT NULL,
+  `day_of_week` tinyint(4) NOT NULL COMMENT '0=Sun, 1=Mon, ..., 6=Sat',
+  `is_working_day` tinyint(1) NOT NULL DEFAULT 1,
+  `shift_in` time DEFAULT NULL,
+  `shift_out` time DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table system_settings
+-- Table structure for table `sessions`
 --
 
-CREATE TABLE system_settings (
-  id int(11) NOT NULL,
-  settingKey varchar(100) NOT NULL,
-  settingValue text NOT NULL,
-  category enum('biometric','backup','system_date','payroll','attendance','leave_limits','general') NOT NULL,
-  description varchar(255) DEFAULT NULL,
-  updatedBy varchar(50) DEFAULT NULL,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `sessions` (
+  `id` varchar(255) NOT NULL,
+  `user_id` varchar(10) DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_agent` text DEFAULT NULL,
+  `payload` longtext NOT NULL,
+  `last_activity` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table system_settings_legacy
+-- Table structure for table `users`
 --
 
-CREATE TABLE system_settings_legacy (
-  id int(11) NOT NULL,
-  settingKey varchar(100) NOT NULL,
-  settingValue text NOT NULL,
-  category enum('biometric','backup','system_date','payroll','attendance','leave_limits','general') NOT NULL,
-  description varchar(255) DEFAULT NULL,
-  updatedBy varchar(50) DEFAULT NULL,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+CREATE TABLE `users` (
+  `id` varchar(10) NOT NULL,
+  `username` varchar(50) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `fullName` varchar(100) NOT NULL,
+  `role` enum('employee','hr','accounting','admin') NOT NULL,
+  `employmentStatus` enum('probationary','regular','resigned','terminated') NOT NULL DEFAULT 'probationary',
+  `isActive` tinyint(1) NOT NULL DEFAULT 1,
+  `firstName` varchar(50) DEFAULT NULL,
+  `middleName` varchar(50) DEFAULT NULL,
+  `lastName` varchar(50) DEFAULT NULL,
+  `gender` enum('Male','Female','Other') DEFAULT NULL,
+  `dateOfBirth` date DEFAULT NULL,
+  `civilStatus` varchar(20) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `phoneNumber` varchar(20) DEFAULT NULL,
+  `addressStreet` varchar(255) DEFAULT NULL,
+  `addressBarangay` varchar(100) DEFAULT NULL,
+  `addressCity` varchar(100) DEFAULT NULL,
+  `addressProvince` varchar(100) DEFAULT NULL,
+  `addressRegion` varchar(100) DEFAULT NULL,
+  `addressZipCode` varchar(10) DEFAULT NULL,
+  `department` varchar(100) DEFAULT NULL,
+  `position` varchar(100) DEFAULT NULL,
+  `branch` varchar(100) NOT NULL DEFAULT 'Meycauayan Main',
+  `hireDate` date DEFAULT NULL,
+  `basicSalary` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `dailyRate` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `hourlyRate` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `biometricEnrolled` tinyint(1) NOT NULL DEFAULT 0,
+  `enrolledFingerType` varchar(50) DEFAULT NULL,
+  `biometricEnrollmentDate` timestamp NULL DEFAULT NULL,
+  `remember_token` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table thirteenth_month_records
+-- Table structure for table `user_schedules`
 --
 
-CREATE TABLE thirteenth_month_records (
-  id varchar(50) NOT NULL,
-  employeeId varchar(10) NOT NULL,
-  employeeName varchar(255) NOT NULL,
-  department varchar(100) NOT NULL,
-  position varchar(100) NOT NULL,
-  year int(11) NOT NULL,
-  hireDate date NOT NULL,
-  separationDate date DEFAULT NULL,
-  totalBasicSalary decimal(12,2) NOT NULL,
-  monthsWorked decimal(5,2) NOT NULL,
-  thirteenthMonthAmount decimal(12,2) NOT NULL,
-  periodStart date NOT NULL,
-  periodEnd date NOT NULL,
-  daysWorked int(11) NOT NULL,
-  totalDaysInYear int(11) NOT NULL,
-  isProrated tinyint(1) DEFAULT 0,
-  prorateReason varchar(100) DEFAULT NULL,
-  payrollPeriodsIncluded longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(payrollPeriodsIncluded)),
-  basicPayBreakdown longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(basicPayBreakdown)),
-  status enum('draft','computed','approved','released') DEFAULT 'draft',
-  computedDate datetime DEFAULT NULL,
-  approvedDate datetime DEFAULT NULL,
-  approvedBy varchar(255) DEFAULT NULL,
-  releasedDate datetime DEFAULT NULL,
-  releasedBy varchar(255) DEFAULT NULL,
-  notes text DEFAULT NULL,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  updatedAt timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table users
---
-
-CREATE TABLE users (
-  id varchar(10) NOT NULL,
-  username varchar(50) NOT NULL,
-  password varchar(255) NOT NULL,
-  fullName varchar(100) NOT NULL,
-  role enum('employee','hr','accounting','admin') NOT NULL,
-  employmentStatus enum('probationary','regular','resigned','terminated') DEFAULT 'probationary',
-  firstName varchar(50) DEFAULT NULL,
-  middleName varchar(50) DEFAULT NULL,
-  lastName varchar(50) DEFAULT NULL,
-  gender enum('Male','Female','Other') DEFAULT NULL,
-  dateOfBirth date DEFAULT NULL,
-  civilStatus varchar(20) DEFAULT NULL,
-  email varchar(100) DEFAULT NULL,
-  phoneNumber varchar(20) DEFAULT NULL,
-  address text DEFAULT NULL,
-  region varchar(100) DEFAULT NULL,
-  province varchar(100) DEFAULT NULL,
-  city varchar(100) DEFAULT NULL,
-  barangay varchar(100) DEFAULT NULL,
-  emergencyContactName varchar(100) DEFAULT NULL,
-  emergencyContactRelationship varchar(50) DEFAULT NULL,
-  emergencyContactPhone varchar(20) DEFAULT NULL,
-  department varchar(100) DEFAULT NULL,
-  position varchar(100) DEFAULT NULL,
-  branch varchar(100) DEFAULT 'Meycauayan Main',
-  hireDate date DEFAULT NULL,
-  basicSalary decimal(10,2) DEFAULT 0.00,
-  dailyRate decimal(10,2) DEFAULT 0.00,
-  hourlyRate decimal(10,2) DEFAULT 0.00,
-  sssNumber varchar(20) DEFAULT NULL,
-  philHealthNumber varchar(20) DEFAULT NULL,
-  pagIbigNumber varchar(20) DEFAULT NULL,
-  tinNumber varchar(20) DEFAULT NULL,
-  taxStatus enum('S','ME','S1','S2','S3','S4','ME1','ME2','ME3','ME4') DEFAULT 'S',
-  sickLeaveBalance decimal(5,2) DEFAULT 5.00,
-  vacationLeaveBalance decimal(5,2) DEFAULT 5.00,
-  emergencyLeaveBalance decimal(5,2) DEFAULT 5.00,
-  maternityLeaveBalance decimal(5,2) DEFAULT 0.00,
-  paternityLeaveBalance decimal(5,2) DEFAULT 0.00,
-  defaultShift enum('Day','Night') DEFAULT 'Day',
-  shiftRotationWeek int(11) DEFAULT 1,
-  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
-  isActive tinyint(1) DEFAULT 1,
-  enrolledFingerType varchar(50) DEFAULT NULL COMMENT 'Which finger was enrolled (e.g., right-index, left-thumb)',
-  biometricEnrolled tinyint(1) DEFAULT 0 COMMENT 'Is biometric enrolled?',
-  biometricEnrollmentDate timestamp NULL DEFAULT NULL COMMENT 'When was biometric enrolled?',
-  currentAddressRegion varchar(100) DEFAULT NULL,
-  currentAddressProvince varchar(100) DEFAULT NULL,
-  currentAddressCity varchar(100) DEFAULT NULL,
-  currentAddressBarangay varchar(100) DEFAULT NULL,
-  currentAddressStreet varchar(255) DEFAULT NULL,
-  currentAddressZipCode varchar(10) DEFAULT NULL,
-  permanentAddressRegion varchar(100) DEFAULT NULL,
-  permanentAddressProvince varchar(100) DEFAULT NULL,
-  permanentAddressCity varchar(100) DEFAULT NULL,
-  permanentAddressBarangay varchar(100) DEFAULT NULL,
-  permanentAddressStreet varchar(255) DEFAULT NULL,
-  permanentAddressZipCode varchar(10) DEFAULT NULL
+CREATE TABLE `user_schedules` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` varchar(10) NOT NULL,
+  `template_id` bigint(20) UNSIGNED NOT NULL,
+  `effective_date` date NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
