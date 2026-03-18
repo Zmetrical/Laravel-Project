@@ -18,7 +18,7 @@ MySQL, and role-based access for Employee, HR, Accounting, and Admin users.
 ---
 
 ## About
-This system was built to handle the day-to-day payroll and HR operations of a multi-branch office. It covers everything from clocking in and filing leaves to processing payroll periods and generating reports — all in one place with role-based access.
+This system was built to handle the day-to-day payroll and HR operations of a multi-branch office. It covers everything from clocking in and filing leaves to processing payroll periods and generating reports, all in one place with role-based access.
 
 ---
 
