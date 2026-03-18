@@ -91,25 +91,6 @@ This system was built to handle the day-to-day payroll and HR operations of a mu
 
 This system integrates with a separate **Government Loan Simulation API** that mimics the SSS and PAG-IBIG member portals. The API acts as an external loan application platform — employees submit loan requests there, and once approved, HR encodes the approved applications directly into the payroll system.
 
-**How it works:**
-
-1. Employees file SSS or PAG-IBIG loan applications through the external portal app.
-2. HR opens an employee's profile and checks the **Government Portal** tab.
-3. Approved applications from the portal appear in the **Loan Applications (Portal)** table, pulled live via the API.
-4. HR clicks **Encode** on an approved application — this redirects to Loan Management with the details pre-filled (reference number, loan type, amount, term).
-5. HR confirms and saves the loan into the payroll system for automatic monthly deduction processing.
-
-**Data pulled from the API:**
-
-| Field | Description |
-|-------|-------------|
-| `reference_no` | Unique portal application reference |
-| `loan_type` | `sss` or `pagibig` |
-| `loan_type_name` | Display name (e.g. SSS Salary Loan) |
-| `amount` | Approved loan amount |
-| `term_months` | Repayment term |
-| `status` | `pending`, `approved`, or `rejected` |
-
 **Configuration** — set the portal base URL in `.env`:
 ```env
 GOVERNMENT_API_URL=http://your-loan-api-url
