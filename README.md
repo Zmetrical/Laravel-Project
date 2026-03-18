@@ -1,6 +1,6 @@
 # CLDG Office Payroll System
-A web-based payroll and HR management system built with Laravel and Bootstrap 5.
-Supports multiple roles — Employee, HR, Accounting, and Admin — each with their own set of modules and access.
+A Laravel-based payroll and HR system for multi-branch offices — built on AdminLTE,
+MySQL, and role-based access for Employee, HR, Accounting, and Admin users.
 
 ![Login](screenshots/login.png)
 
